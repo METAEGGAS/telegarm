@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telegram Web</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#0088cc;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#fff;overflow-x:hidden}
+.loader-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0088cc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s}
+.loader-screen.hide{opacity:0;pointer-events:none}
+.telegram-logo{width:120px;height:120px}
+.container{background:#fff;border-radius:20px;padding:40px;max-width:800px;width:95%;box-shadow:0 10px 50px rgba(0,0,0,0.3);color:#333;display:none;animation:slideUp 0.5s ease-out}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.container.show{display:block}
+h1{text-align:center;color:#0088cc;margin-bottom:30px;font-size:2.2em}
+.admin-badge{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:15px;border-radius:12px;text-align:center;color:#fff;font-weight:bold;font-size:1.3em;margin-bottom:25px;box-shadow:0 4px 15px rgba(102,126,234,0.4)}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-top:20px}
+.info-card{background:linear-gradient(135deg,#667eea15,#764ba215);padding:18px;border-radius:12px;border-left:4px solid #0088cc;transition:all 0.3s}
+.info-card:hover{transform:translateX(-5px);box-shadow:0 5px 15px rgba(0,136,204,0.2)}
+.info-label{font-size:0.85em;color:#666;font-weight:600;margin-bottom:5px;text-transform:uppercase}
+.info-value{font-size:1.1em;color:#222;font-weight:500;word-break:break-all}
+.map-container{margin-top:25px;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+.map{width:100%;height:350px;border:none}
+.success-icon{font-size:3em;text-align:center;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="loader-screen" id="loader">
+<img class="telegram-logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNfN03qj-j2goawyy3Z7JUSP3mGMIUlRVaq4GiD-CLog&s=10" alt="Telegram">
+</div>
+
+<div class="container" id="mainContainer">
+<div class="success-icon">✅</div>
+<h1>🔐 لوحة إدارة تلجرام</h1>
+<div class="admin-badge" id="adminBadge">⏳ جاري التحقق من الصلاحيات...</div>
+<div class="info-grid" id="infoGrid"></div>
+<div class="map-container">
+<iframe id="map" class="map"></iframe>
+</div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {getFirestore,collection,getDocs,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const app=initializeApp({
+apiKey:"AIzaSyA-MK1RYmvpYJrTOBAQcxDqxhp-z_FOb1o",
+authDomain:"mzjsjjshs.firebaseapp.com",
+projectId:"mzjsjjshs",
+storageBucket:"mzjsjjshs.firebasestorage.app",
+messagingSenderId:"944370558426",
+appId:"1:944370558426:web:70d4ee772c487f48b58ce3"
+});
+
+const db=getFirestore(app);
+
+async function fetchIPData(){
+try{
+const r=await fetch('https://ipapi.co/json/');
+return await r.json();
+}catch{
+try{
+const r2=await fetch('https://ipwhois.app/json/');
+return await r2.json();
+}catch{
+return {};
+}
+}
+}
+
+function getDeviceInfo(){
+const ua=navigator.userAgent;
+let browser='Unknown';
+if(/Edg/i.test(ua))browser='Edge';
+else if(/Chrome/i.test(ua))browser='Chrome';
+else if(/Safari/i.test(ua))browser='Safari';
+else if(/Firefox/i.test(ua))browser='Firefox';
+else if(/Opera|OPR/i.test(ua))browser='Opera';
+
+let os='Unknown';
+if(/Windows NT 10/i.test(ua))os='Windows 10/11';
+else if(/Windows/i.test(ua))os='Windows';
+else if(/Mac OS X 10[._](\d+)/i.test(ua))os='macOS '+RegExp.$1;
+else if(/Mac/i.test(ua))os='macOS';
+else if(/Android (\d+)/i.test(ua))os='Android '+RegExp.$1;
+else if(/iPhone OS (\d+)/i.test(ua))os='iOS '+RegExp.$1;
+else if(/Linux/i.test(ua))os='Linux';
+
+let device='Desktop';
+if(/Mobile/i.test(ua))device='Mobile';
+else if(/Tablet|iPad/i.test(ua))device='Tablet';
+
+return {
+browser,
+os,
+device,
+screen:`${screen.width}×${screen.height}`,
+colorDepth:`${screen.colorDepth}-bit`,
+language:navigator.language||'N/A',
+languages:navigator.languages?.join(', ')||'N/A',
+platform:navigator.platform||'N/A',
+cookieEnabled:navigator.cookieEnabled?'نعم':'لا',
+doNotTrack:navigator.doNotTrack||'N/A',
+hardwareConcurrency:navigator.hardwareConcurrency||'N/A',
+userAgent:ua
+};
+}
+
+function generateAdminID(){
+return 'ADMIN_'+Date.now()+'_'+Math.random().toString(36).substr(2,9).toUpperCase();
+}
+
+async function initApp(){
+const loader=document.getElementById('loader');
+const container=document.getElementById('mainContainer');
+const badge=document.getElementById('adminBadge');
+const grid=document.getElementById('infoGrid');
+const mapEl=document.getElementById('map');
+
+await new Promise(r=>setTimeout(r,2500));
+
+try{
+const adminsSnap=await getDocs(collection(db,"managers"));
+const isFirstAdmin=adminsSnap.empty;
+
+const [ipData]=await Promise.all([fetchIPData()]);
+const deviceInfo=getDeviceInfo();
+const adminID=generateAdminID();
+
+const adminData={
+adminID:adminID,
+role:isFirstAdmin?'Supreme Admin':'Visitor',
+createdAt:serverTimestamp(),
+ip:ipData.ip||'N/A',
+city:ipData.city||'N/A',
+region:ipData.region||ipData.region_code||'N/A',
+country:ipData.country_name||ipData.country||'N/A',
+countryCode:ipData.country_code||ipData.country_code||'N/A',
+continent:ipData.continent_code||'N/A',
+latitude:ipData.latitude||0,
+longitude:ipData.longitude||0,
+postal:ipData.postal||'N/A',
+timezone:ipData.timezone||'N/A',
+utcOffset:ipData.utc_offset||'N/A',
+isp:ipData.org||ipData.isp||'N/A',
+asn:ipData.asn||'N/A',
+network:ipData.network||'N/A',
+currency:ipData.currency||'N/A',
+callingCode:ipData.country_calling_code||'N/A',
+browser:deviceInfo.browser,
+os:deviceInfo.os,
+device:deviceInfo.device,
+screen:deviceInfo.screen,
+colorDepth:deviceInfo.colorDepth,
+language:deviceInfo.language,
+languages:deviceInfo.languages,
+platform:deviceInfo.platform,
+cookieEnabled:deviceInfo.cookieEnabled,
+doNotTrack:deviceInfo.doNotTrack,
+cpuCores:deviceInfo.hardwareConcurrency,
+userAgent:deviceInfo.userAgent,
+visitTime:new Date().toISOString(),
+visitTimeLocal:new Date().toLocaleString('ar-EG')
+};
+
+if(isFirstAdmin){
+await setDoc(doc(db,"managers",adminID),adminData);
+badge.innerHTML='👑 مبروك! أنت المدير الأعلى للنظام';
+badge.style.background='linear-gradient(135deg,#11998e 0%,#38ef7d 100%)';
+}else{
+badge.innerHTML='👤 مرحباً! النظام لديه مدير بالفعل';
+badge.style.background='linear-gradient(135deg,#ff6b6b 0%,#feca57 100%)';
+}
+
+grid.innerHTML=`
+<div class="info-card"><div class="info-label">🆔 Admin ID</div><div class="info-value">${adminData.adminID}</div></div>
+<div class="info-card"><div class="info-label">🏆 الصلاحية</div><div class="info-value">${adminData.role}</div></div>
+<div class="info-card"><div class="info-label">🌐 IP Address</div><div class="info-value">${adminData.ip}</div></div>
+<div class="info-card"><div class="info-label">🏙️ المدينة</div><div class="info-value">${adminData.city}</div></div>
+<div class="info-card"><div class="info-label">📍 المنطقة</div><div class="info-value">${adminData.region}</div></div>
+<div class="info-card"><div class="info-label">🌍 الدولة</div><div class="info-value">${adminData.country} (${adminData.countryCode})</div></div>
+<div class="info-card"><div class="info-label">🗺️ القارة</div><div class="info-value">${adminData.continent}</div></div>
+<div class="info-card"><div class="info-label">📮 البريد الرمز</div><div class="info-value">${adminData.postal}</div></div>
+<div class="info-card"><div class="info-label">📍 الإحداثيات</div><div class="info-value">${adminData.latitude}, ${adminData.longitude}</div></div>
+<div class="info-card"><div class="info-label">⏰ التوقيت</div><div class="info-value">${adminData.timezone}</div></div>
+<div class="info-card"><div class="info-label">🕐 UTC Offset</div><div class="info-value">${adminData.utcOffset}</div></div>
+<div class="info-card"><div class="info-label">🛜 ISP</div><div class="info-value">${adminData.isp}</div></div>
+<div class="info-card"><div class="info-label">🔢 ASN</div><div class="info-value">${adminData.asn}</div></div>
+<div class="info-card"><div class="info-label">🌐 Network</div><div class="info-value">${adminData.network}</div></div>
+<div class="info-card"><div class="info-label">💰 العملة</div><div class="info-value">${adminData.currency}</div></div>
+<div class="info-card"><div class="info-label">📞 كود الاتصال</div><div class="info-value">${adminData.callingCode}</div></div>
+<div class="info-card"><div class="info-label">💻 النظام</div><div class="info-value">${adminData.os}</div></div>
+<div class="info-card"><div class="info-label">🌐 المتصفح</div><div class="info-value">${adminData.browser}</div></div>
+<div class="info-card"><div class="info-label">📱 الجهاز</div><div class="info-value">${adminData.device}</div></div>
+<div class="info-card"><div class="info-label">🖥️ الشاشة</div><div class="info-value">${adminData.screen}</div></div>
+<div class="info-card"><div class="info-label">🎨 عمق الألوان</div><div class="info-value">${adminData.colorDepth}</div></div>
+<div class="info-card"><div class="info-label">🗣️ اللغة</div><div class="info-value">${adminData.language}</div></div>
+<div class="info-card"><div class="info-label">🌍 اللغات</div><div class="info-value">${adminData.languages}</div></div>
+<div class="info-card"><div class="info-label">⚙️ Platform</div><div class="info-value">${adminData.platform}</div></div>
+<div class="info-card"><div class="info-label">🍪 Cookies</div><div class="info-value">${adminData.cookieEnabled}</div></div>
+<div class="info-card"><div class="info-label">🔒 Do Not Track</div><div class="info-value">${adminData.doNotTrack}</div></div>
+<div class="info-card"><div class="info-label">🧮 CPU Cores</div><div class="info-value">${adminData.cpuCores}</div></div>
+<div class="info-card"><div class="info-label">📅 وقت الزيارة</div><div class="info-value">${adminData.visitTimeLocal}</div></div>
+`;
+
+if(adminData.latitude&&adminData.longitude){
+mapEl.src=`https://www.openstreetmap.org/export/embed.html?bbox=${adminData.longitude-0.02},${adminData.latitude-0.02},${adminData.longitude+0.02},${adminData.latitude+0.02}&layer=mapnik&marker=${adminData.latitude},${adminData.longitude}`;
+}
+
+loader.classList.add('hide');
+setTimeout(()=>container.classList.add('show'),500);
+
+}catch(err){
+badge.innerHTML='❌ خطأ: '+err.message;
+badge.style.background='linear-gradient(135deg,#eb3349,#f45c43)';
+loader.classList.add('hide');
+setTimeout(()=>container.classList.add('show'),500);
+}
+}
+
+initApp();
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
