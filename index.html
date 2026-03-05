@@ -1,81 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-  <meta charset="UTF‑8">
-  <title>Supabase Demo</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    input, button { margin: 5px 0; padding: 8px; width: 100%; }
-    .log { border: 1px solid #ccc; padding: 8px; height: 100px; overflow:auto }
-  </style>
+<meta charset="UTF-8">
+<title>Supabase Auth Demo</title>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/module/supabase.min.js'
+
+// =============================
+// إعداد Supabase
+// =============================
+const supabaseUrl = 'https://jgbchbqgofimmgwzzoia.supabase.co'
+const supabaseKey = 'sb_publishable_mkNhancggR91jzTuzFryJQ_mQgHS0Qm' // Public key
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+// =============================
+// إنشاء حساب جديد
+// =============================
+window.signUp = async () => {
+  const email = document.getElementById('email').value
+  const password = document.getElementById('password').value
+  const { user, error } = await supabase.auth.signUp({ email, password })
+  const log = document.getElementById('authLog')
+  log.textContent = error ? 'خطأ: ' + error.message : 'تم إنشاء الحساب بنجاح! UID: ' + user?.id
+}
+
+// =============================
+// تسجيل دخول
+// =============================
+window.signIn = async () => {
+  const email = document.getElementById('email').value
+  const password = document.getElementById('password').value
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  const log = document.getElementById('authLog')
+  log.textContent = error ? 'خطأ: ' + error.message : 'تم تسجيل الدخول بنجاح! UID: ' + data.user?.id
+}
+</script>
+<style>
+body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+input, button { padding: 8px; margin: 5px 0; width: 100%; }
+button { cursor: pointer; }
+.log { border: 1px solid #ccc; padding: 8px; height: 100px; overflow:auto; background: #fff; }
+h2 { color: #0077b6; }
+</style>
 </head>
 <body>
-
-<h2>Supabase Authentication & Candles</h2>
-
-<h3>تسجيل / إنشاء حساب</h3>
-<input type="email" id="email" placeholder="Email">
+<h2>تسجيل الدخول / إنشاء حساب</h2>
+<input id="email" placeholder="Email">
 <input type="password" id="password" placeholder="Password">
 <button onclick="signUp()">إنشاء حساب</button>
 <button onclick="signIn()">تسجيل دخول</button>
-<div id="authLog" class="log"></div>
-
-<hr>
-
-<h3>إضافة شمعة</h3>
-<input type="text" id="pair" placeholder="Pair (مثال: BTC/USD)">
-<input type="number" id="open" placeholder="open">
-<input type="number" id="high" placeholder="high">
-<input type="number" id="low" placeholder="low">
-<input type="number" id="close" placeholder="close">
-<input type="number" id="timestamp" placeholder="timestamp">
-<button onclick="addCandle()">أرسل شمعة</button>
-<div id="dataLog" class="log"></div>
-
-<script>
-const supabase = supabase.createClient(
-  "https://jgcbhbqofimmgwzzoia.supabase.co",
-  "sb_publishable_mkNhancggR91jzTuzFryJQ_mQgHS0Qm"
-);
-
-function log(elem, msg) {
-  elem.innerHTML += msg + "<br>";
-  elem.scrollTop = elem.scrollHeight;
-}
-
-async function signUp() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const { user, error } = await supabase.auth.signUp({ email, password });
-  log(document.getElementById("authLog"),
-      error ? "Error: " + error.message : "User Created!");
-}
-
-async function signIn() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  log(document.getElementById("authLog"),
-      error ? "Error: " + error.message : "Signed In!");
-}
-
-async function addCandle() {
-  const p = document.getElementById("pair").value;
-  const o = document.getElementById("open").value;
-  const h = document.getElementById("high").value;
-  const l = document.getElementById("low").value;
-  const c = document.getElementById("close").value;
-  const t = document.getElementById("timestamp").value;
-
-  const { data, error } = await supabase
-    .from("candles")
-    .insert([{ pair: p, open: o, high: h, low: l, close: c, timestamp: t }]);
-
-  log(document.getElementById("dataLog"),
-      error ? "Error: " + error.message : "Candle Inserted!");
-}
-</script>
-
+<pre id="authLog" class="log"></pre>
 </body>
 </html>
