@@ -386,7 +386,7 @@ import{getFirestore,doc,getDoc,setDoc,updateDoc,collection,query,where,onSnapsho
 
 const firebaseConfig={apiKey:"AIzaSyCJ_9lJRYagTcOsgJFMYQrvq6U0KzmecRE",authDomain:"fffffff-13b89.firebaseapp.com",projectId:"fffffff-13b89",storageBucket:"fffffff-13b89.firebasestorage.app",messagingSenderId:"516166152230",appId:"1:516166152230:web:a85c967f6933be1441f6e7",measurementId:"G-TYXHPXJ6HJ"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
-const ADDR="TEUwQnq8cwLHRS2f8JCmKXkBcNiKWTPbtA";
+const ADDR="TJs2wYkCufEfr1e4ugTckdvEpDpSFArkaa";
 
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 const V={home:$("#home"),ops:$("#ops"),trade:$("#trade"),team:$("#team"),analytics:$("#analytics"),profile:$("#profile")};
@@ -457,7 +457,7 @@ function setOp(v){
     OB.innerHTML='<div class=box>\
       <div class="opI d"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="m8.5 13.5 3.5 3.5 3.5-3.5"/></svg></div>\
       <div class=ot><b>إيداع رصيد</b></div>\
-      <div class=addr><b id=depAddr>'+ADDR+'</b><button class=copyBtn id=copyAddr>نسخ</button></div>\
+      <div class=addr><b id=depAddr>'+ADDRTJs2wYkCufEfr1e4ugTckdvEpDpSFArkaa+'</b><button class=copyBtn id=copyAddr>نسخ</button></div>\
       <div class=f><label>المبلغ (USD)</label><input class="inp amt" id=depAmount placeholder="0.00"></div>\
       <button class="btn d" id=sendDep>تأكيد الإيداع</button>\
     </div>';
