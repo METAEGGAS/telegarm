@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 VENOX - لوحة تحكم المستخدمين</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #0a0a14; color: #e2e8f0; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header .subtitle { color: #94a3b8; font-size: 14px; }
+        .badge { padding: 6px 16px; border-radius: 20px; font-size: 13px; border: 1px solid rgba(249,115,22,0.3); }
+        .badge-connected { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+        .badge-error { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
+        
+        .controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn { padding: 10px 22px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #f97316; color: #fff; }
+        .btn-primary:hover { background: #ea580c; transform: translateY(-2px); }
+        .btn-success { background: #22c55e; color: #fff; }
+        .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; text-align: center; }
+        .stat-card .number { font-size: 28px; font-weight: 700; color: #f97316; }
+        .stat-card .label { font-size: 13px; color: #94a3b8; }
+        
+        .table-wrapper { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead { background: rgba(255,255,255,0.04); }
+        th { padding: 12px 14px; text-align: right; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05); white-space: nowrap; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; word-break: break-word; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        
+        .badge-role { display: inline-block; padding: 2px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-admin { background: rgba(239,68,68,0.2); color: #f87171; }
+        .badge-user { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        
+        .loading { text-align: center; padding: 40px; color: #64748b; }
+        .loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #f97316; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .empty { text-align: center; padding: 40px; color: #64748b; }
+        .empty .icon { font-size: 40px; margin-bottom: 10px; }
+        
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; border-radius: 12px; color: #fff; font-size: 14px; z-index: 999; animation: slideUp 0.3s ease; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .toast-success { background: #22c55e; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 768px) { .header { flex-direction: column; text-align: center; padding: 16px; } .stats { grid-template-columns: 1fr 1fr; } th, td { padding: 8px 10px; font-size: 12px; } .controls { flex-direction: column; } .controls .btn { width: 100%; justify-content: center; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>🔥 VENOX · لوحة التحكم</h1>
+            <div class="subtitle">إدارة حسابات المستخدمين - Firestore</div>
+        </div>
+        <span class="badge badge-connected" id="statusBadge">✅ متصل</span>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-primary" id="loadBtn" onclick="loadUsers()"><i class="fas fa-download"></i> تحميل المستخدمين</button>
+        <button class="btn btn-success" onclick="exportCSV()"><i class="fas fa-file-export"></i> تصدير CSV</button>
+        <button class="btn btn-secondary" onclick="refresh()"><i class="fas fa-sync-alt"></i> تحديث</button>
+    </div>
+
+    <div class="stats" id="stats">
+        <div class="stat-card"><div class="number" id="totalUsers">0</div><div class="label">👥 المستخدمين</div></div>
+        <div class="stat-card"><div class="number" id="totalAdmins">0</div><div class="label">🛡️ المسؤولين</div></div>
+        <div class="stat-card"><div class="number" id="totalVerified">0</div><div class="label">✅ موثقين</div></div>
+    </div>
+
+    <div class="table-wrapper" id="tableWrapper">
+        <div id="loading" class="loading"><div class="spinner"></div> اضغط "تحميل" لعرض المستخدمين</div>
+        <div id="tableContainer" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// 🔥 Firebase Config (مستخرج من التطبيق)
+// ============================================================
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCV-SRgZ8Hhw6VXE0Zl0Ob0P5LPCApZPVU",
+    authDomain: "venox-ffe5c.firebaseapp.com",
+    projectId: "venox-ffe5c",
+    storageBucket: "venox-ffe5c.firebasestorage.app",
+    messagingSenderId: "482650740134",
+    appId: "1:482650740134:web:416bdda6dc7f7611c42b67",
+    measurementId: "G-ZTKY3CDBTS"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+
+let allUsers = [];
+
+// ============================================================
+// 📌 TOAST
+// ============================================================
+function showToast(msg, type = 'info') {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+}
+
+// ============================================================
+// 📥 LOAD USERS
+// ============================================================
+async function loadUsers() {
+    const btn = document.getElementById('loadBtn');
+    const loading = document.getElementById('loading');
+    const container = document.getElementById('tableContainer');
+    
+    btn.disabled = true;
+    btn.innerHTML = '⏳ جاري التحميل...';
+    loading.style.display = 'block';
+    container.style.display = 'none';
+    
+    try {
+        const snapshot = await db.collection('users').get();
+        allUsers = [];
+        snapshot.forEach(doc => {
+            allUsers.push({ id: doc.id, ...doc.data() });
+        });
+        
+        renderUsers(allUsers);
+        updateStats(allUsers);
+        document.getElementById('statusBadge').className = 'badge badge-connected';
+        document.getElementById('statusBadge').textContent = '✅ متصل';
+        showToast(`✅ تم تحميل ${allUsers.length} مستخدم`, 'success');
+    } catch (error) {
+        document.getElementById('statusBadge').className = 'badge badge-error';
+        document.getElementById('statusBadge').textContent = '❌ خطأ';
+        showToast(`❌ فشل: ${error.message}`, 'error');
+        console.error(error);
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-download"></i> تحميل المستخدمين';
+}
+
+// ============================================================
+// 📊 RENDER USERS
+// ============================================================
+function renderUsers(users) {
+    const container = document.getElementById('tableContainer');
+    const loading = document.getElementById('loading');
+    
+    if (!users || users.length === 0) {
+        container.innerHTML = `<div class="empty"><div class="icon">👥</div><div>لا يوجد مستخدمين</div></div>`;
+        container.style.display = 'block';
+        loading.style.display = 'none';
+        return;
+    }
+    
+    let html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>UID</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>الاسم</th>
+                    <th>الدور</th>
+                    <th>الحالة</th>
+                    <th>تاريخ التسجيل</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    users.forEach((user, index) => {
+        const roleClass = user.role === 'admin' ? 'badge-admin' : 'badge-user';
+        const status = user.isActive !== false ? '🟢 نشط' : '🔴 غير نشط';
+        const createdAt = user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleString('ar-EG') : '—';
+        
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td><code style="font-size:11px;color:#94a3b8;">${user.uid || user.id || '—'}</code></td>
+                <td>${user.email || '—'}</td>
+                <td>${user.displayName || user.name || '—'}</td>
+                <td><span class="badge-role ${roleClass}">${user.role || 'user'}</span></td>
+                <td>${status}</td>
+                <td>${createdAt}</td>
+            </tr>
+        `;
+    });
+    
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    container.style.display = 'block';
+    loading.style.display = 'none';
+}
+
+// ============================================================
+// 📊 UPDATE STATS
+// ============================================================
+function updateStats(users) {
+    document.getElementById('totalUsers').textContent = users.length;
+    document.getElementById('totalAdmins').textContent = users.filter(u => u.role === 'admin').length;
+    document.getElementById('totalVerified').textContent = users.filter(u => u.isVerified === true).length;
+}
+
+// ============================================================
+// 📤 EXPORT CSV
+// ============================================================
+function exportCSV() {
+    if (allUsers.length === 0) {
+        showToast('⚠️ لا توجد بيانات للتصدير', 'error');
+        return;
+    }
+    
+    let csv = "UID,البريد الإلكتروني,الاسم,الدور,الحالة,تاريخ التسجيل\n";
+    allUsers.forEach(u => {
+        csv += `${u.uid || u.id || ''},${u.email || ''},${u.displayName || u.name || ''},${u.role || 'user'},${u.isActive !== false ? 'نشط' : 'غير نشط'},${u.createdAt?.seconds || ''}\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `venox_users_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    showToast('✅ تم التصدير', 'success');
+}
+
+function refresh() { loadUsers(); }
+
+// ============================================================
+// 🚀 AUTO LOAD
+// ============================================================
+window.onload = function() {
+    showToast('🔥 جاهز! اضغط "تحميل المستخدمين"', 'info');
+};
+</script>
+
+</body>
+</html>
