@@ -12,7 +12,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { background: #0a0a14; color: #e2e8f0; min-height: 100vh; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
         
         .header {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
@@ -60,16 +60,9 @@
         .btn-primary:hover { background: #ea580c; transform: translateY(-2px); }
         .btn-success { background: #22c55e; color: #fff; }
         .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
         .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-        
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; text-align: center; }
-        .stat-card .number { font-size: 28px; font-weight: 700; color: #f97316; }
-        .stat-card .label { font-size: 13px; color: #94a3b8; }
         
         .result-box {
             background: rgba(0,0,0,0.3);
@@ -80,7 +73,7 @@
             color: #94a3b8;
             white-space: pre-wrap;
             word-break: break-all;
-            max-height: 300px;
+            max-height: 250px;
             overflow: auto;
             margin-top: 12px;
         }
@@ -103,15 +96,9 @@
     <div class="header">
         <div>
             <h1>🔥 VENOX · لوحة التحكم</h1>
-            <div class="subtitle">إدارة Firebase Auth + Firestore</div>
+            <div class="subtitle">إنشاء حسابات + عرض المستخدمين</div>
         </div>
         <span class="badge badge-connected" id="statusBadge">✅ متصل</span>
-    </div>
-
-    <div class="stats">
-        <div class="stat-card"><div class="number" id="userCount">0</div><div class="label">👥 المستخدمين</div></div>
-        <div class="stat-card"><div class="number" id="adminCount">0</div><div class="label">🛡️ المسؤولين</div></div>
-        <div class="stat-card"><div class="number" id="verifiedCount">0</div><div class="label">✅ موثقين</div></div>
     </div>
 
     <div class="grid-2">
@@ -120,40 +107,22 @@
             <h3>🔐 إنشاء حساب جديد</h3>
             <div class="form-group">
                 <label>البريد الإلكتروني</label>
-                <input type="email" id="signupEmail" placeholder="example@email.com" value="test_${Date.now()}@example.com">
+                <input type="email" id="signupEmail" placeholder="example@email.com">
             </div>
             <div class="form-group">
                 <label>كلمة المرور</label>
                 <input type="password" id="signupPassword" placeholder="••••••••" value="Test123!">
             </div>
-            <button class="btn btn-success" id="signupBtn" onclick="createAccount()">🚀 إنشاء حساب</button>
+            <button class="btn btn-success" onclick="createAccount()">🚀 إنشاء حساب</button>
             <div id="signupResult" class="result-box">⏳ انتظر...</div>
         </div>
 
-        <!-- ===== تسجيل الدخول ===== -->
+        <!-- ===== عرض المستخدمين ===== -->
         <div class="card">
-            <h3>🔑 تسجيل الدخول</h3>
-            <div class="form-group">
-                <label>البريد الإلكتروني</label>
-                <input type="email" id="loginEmail" placeholder="example@email.com" value="test@example.com">
-            </div>
-            <div class="form-group">
-                <label>كلمة المرور</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" value="Test123!">
-            </div>
-            <button class="btn btn-primary" onclick="signIn()">🔓 تسجيل الدخول</button>
-            <div id="loginResult" class="result-box">⏳ انتظر...</div>
-        </div>
-    </div>
-
-    <!-- ===== عرض المستخدمين ===== -->
-    <div class="card">
-        <h3>👥 المستخدمين</h3>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <h3>👥 المستخدمين</h3>
             <button class="btn btn-primary" onclick="loadUsers()">📥 تحميل المستخدمين</button>
-            <button class="btn btn-secondary" onclick="clearResult()">🗑️ مسح</button>
+            <div id="usersResult" class="result-box">⏳ اضغط "تحميل"</div>
         </div>
-        <div id="usersResult" class="result-box">⏳ اضغط "تحميل" لعرض المستخدمين</div>
     </div>
 </div>
 
@@ -188,7 +157,7 @@ function showToast(msg, type = 'info') {
 }
 
 // ============================================================
-// 🔐 إنشاء حساب
+// 🔐 إنشاء حساب (بدون كتابة في Firestore)
 // ============================================================
 async function createAccount() {
     const email = document.getElementById('signupEmail').value.trim();
@@ -203,71 +172,23 @@ async function createAccount() {
     
     result.textContent = '⏳ جاري إنشاء الحساب...';
     result.className = 'result-box';
-    document.getElementById('signupBtn').disabled = true;
     
     try {
         const userCred = await auth.createUserWithEmailAndPassword(email, password);
         result.textContent = `✅ تم إنشاء الحساب!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`;
         result.className = 'result-box success';
         showToast('✅ تم إنشاء الحساب', 'success');
-        
-        // حفظ في Firestore
-        await db.collection('users').doc(userCred.user.uid).set({
-            uid: userCred.user.uid,
-            email: userCred.user.email,
-            role: 'user',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
         document.getElementById('statusBadge').className = 'badge badge-connected';
-        document.getElementById('statusBadge').textContent = '✅ متصل';
-    } catch (error) {
-        result.textContent = `❌ فشل: ${error.message}`;
-        result.className = 'result-box error';
-        showToast(`❌ ${error.message}`, 'error');
-    }
-    document.getElementById('signupBtn').disabled = false;
-}
-
-// ============================================================
-// 🔑 تسجيل الدخول
-// ============================================================
-async function signIn() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    const result = document.getElementById('loginResult');
-    
-    if (!email || !password) {
-        result.textContent = '❌ أدخل البريد وكلمة المرور';
-        result.className = 'result-box error';
-        return;
-    }
-    
-    result.textContent = '⏳ جاري تسجيل الدخول...';
-    result.className = 'result-box';
-    
-    try {
-        const userCred = await auth.signInWithEmailAndPassword(email, password);
-        result.textContent = `✅ تم تسجيل الدخول!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`;
-        result.className = 'result-box success';
-        showToast('✅ تم تسجيل الدخول', 'success');
-        document.getElementById('statusBadge').className = 'badge badge-connected';
-        document.getElementById('statusBadge').textContent = '✅ متصل';
-        
-        // جلب التوكن
-        const token = await userCred.user.getIdToken();
-        console.log('🔑 Token:', token);
     } catch (error) {
         result.textContent = `❌ فشل: ${error.message}`;
         result.className = 'result-box error';
         showToast(`❌ ${error.message}`, 'error');
         document.getElementById('statusBadge').className = 'badge badge-error';
-        document.getElementById('statusBadge').textContent = '❌ خطأ';
     }
 }
 
 // ============================================================
-// 👥 تحميل المستخدمين
+// 👥 تحميل المستخدمين (قراءة فقط)
 // ============================================================
 async function loadUsers() {
     const result = document.getElementById('usersResult');
@@ -280,7 +201,7 @@ async function loadUsers() {
         snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
         
         if (users.length === 0) {
-            result.textContent = '📭 لا يوجد مستخدمين';
+            result.textContent = '📭 لا يوجد مستخدمين (أو القواعد تمنع القراءة)';
             result.className = 'result-box';
             return;
         }
@@ -291,21 +212,11 @@ async function loadUsers() {
         });
         result.textContent = text;
         result.className = 'result-box success';
-        
-        // تحديث الإحصائيات
-        document.getElementById('userCount').textContent = users.length;
-        document.getElementById('adminCount').textContent = users.filter(u => u.role === 'admin').length;
-        document.getElementById('verifiedCount').textContent = users.filter(u => u.isVerified === true).length;
     } catch (error) {
         result.textContent = `❌ فشل: ${error.message}`;
         result.className = 'result-box error';
         showToast(`❌ ${error.message}`, 'error');
     }
-}
-
-function clearResult() {
-    document.getElementById('usersResult').textContent = '⏳ اضغط "تحميل" لعرض المستخدمين';
-    document.getElementById('usersResult').className = 'result-box';
 }
 </script>
 
