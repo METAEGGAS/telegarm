@@ -62,6 +62,8 @@
         .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
         .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
         
         .result-box {
@@ -121,6 +123,7 @@
         <div class="card">
             <h3>👥 المستخدمين</h3>
             <button class="btn btn-primary" onclick="loadUsers()">📥 تحميل المستخدمين</button>
+            <button class="btn btn-danger" onclick="clearAll()" style="margin-right:10px;">🗑️ مسح الكل</button>
             <div id="usersResult" class="result-box">⏳ اضغط "تحميل"</div>
         </div>
     </div>
@@ -157,7 +160,7 @@ function showToast(msg, type = 'info') {
 }
 
 // ============================================================
-// 🔐 إنشاء حساب (بدون كتابة في Firestore)
+// 🔐 إنشاء حساب
 // ============================================================
 async function createAccount() {
     const email = document.getElementById('signupEmail').value.trim();
@@ -188,7 +191,7 @@ async function createAccount() {
 }
 
 // ============================================================
-// 👥 تحميل المستخدمين (قراءة فقط)
+// 👥 تحميل المستخدمين
 // ============================================================
 async function loadUsers() {
     const result = document.getElementById('usersResult');
@@ -217,6 +220,19 @@ async function loadUsers() {
         result.className = 'result-box error';
         showToast(`❌ ${error.message}`, 'error');
     }
+}
+
+// ============================================================
+// 🗑️ مسح كل شيء
+// ============================================================
+function clearAll() {
+    document.getElementById('usersResult').textContent = '⏳ اضغط "تحميل"';
+    document.getElementById('usersResult').className = 'result-box';
+    document.getElementById('signupResult').textContent = '⏳ انتظر...';
+    document.getElementById('signupResult').className = 'result-box';
+    document.getElementById('signupEmail').value = '';
+    document.getElementById('signupPassword').value = 'Test123!';
+    showToast('🗑️ تم المسح', 'info');
 }
 </script>
 
