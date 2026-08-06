@@ -3,50 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 VENOX - فحص Firebase</title>
+    <title>🔥 VENOX - لوحة التحكم</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #0a0a14; color: #e2e8f0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 16px; padding: 20px 28px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.05); }
-        .header h1 { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #f97316; color: #fff; margin: 5px; }
-        .btn:hover { background: #ea580c; transform: translateY(-2px); }
-        .btn-success { background: #22c55e; }
-        .btn-success:hover { background: #16a34a; }
+        body { background: #0a0a14; color: #e2e8f0; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header .subtitle { color: #94a3b8; font-size: 14px; }
+        .badge { padding: 6px 16px; border-radius: 20px; font-size: 13px; border: 1px solid rgba(249,115,22,0.3); }
+        .badge-connected { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+        .badge-error { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
+        
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h3 { color: #f97316; margin-bottom: 16px; }
+        
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 4px; }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus { border-color: #f97316; }
+        
+        .btn { padding: 10px 22px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #f97316; color: #fff; }
+        .btn-primary:hover { background: #ea580c; transform: translateY(-2px); }
+        .btn-success { background: #22c55e; color: #fff; }
+        .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
         .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
-        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
-        .result { background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; margin-top: 12px; font-family: monospace; font-size: 13px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; max-height: 500px; overflow: auto; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: rgba(34,197,94,0.2); color: #4ade80; }
-        .badge-error { background: rgba(239,68,68,0.2); color: #f87171; }
-        .badge-info { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; text-align: center; }
+        .stat-card .number { font-size: 28px; font-weight: 700; color: #f97316; }
+        .stat-card .label { font-size: 13px; color: #94a3b8; }
+        
+        .result-box {
+            background: rgba(0,0,0,0.3);
+            padding: 16px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #94a3b8;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow: auto;
+            margin-top: 12px;
+        }
+        .result-box.success { border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+        .result-box.error { border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+        
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 500; z-index: 999; animation: slideUp 0.3s ease; max-width: 450px; }
+        .toast-success { background: #22c55e; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>🔥 VENOX · Firestore Scanner</h1>
-        <p style="color:#94a3b8;font-size:14px;">جرب مجموعات مختلفة قد تكون مفتوحة للقراءة</p>
+        <div>
+            <h1>🔥 VENOX · لوحة التحكم</h1>
+            <div class="subtitle">إدارة Firebase Auth + Firestore</div>
+        </div>
+        <span class="badge badge-connected" id="statusBadge">✅ متصل</span>
     </div>
 
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-        <button class="btn" onclick="scanCollection('users')">👥 users</button>
-        <button class="btn" onclick="scanCollection('deposits')">📥 deposits</button>
-        <button class="btn" onclick="scanCollection('withdrawals')">📤 withdrawals</button>
-        <button class="btn" onclick="scanCollection('transactions')">💱 transactions</button>
-        <button class="btn" onclick="scanCollection('investments')">📈 investments</button>
-        <button class="btn btn-success" onclick="scanAll()">🔍 فحص الكل</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('output').textContent=''">🗑️ مسح</button>
+    <div class="stats">
+        <div class="stat-card"><div class="number" id="userCount">0</div><div class="label">👥 المستخدمين</div></div>
+        <div class="stat-card"><div class="number" id="adminCount">0</div><div class="label">🛡️ المسؤولين</div></div>
+        <div class="stat-card"><div class="number" id="verifiedCount">0</div><div class="label">✅ موثقين</div></div>
     </div>
 
-    <div id="output" class="result">⏳ اضغط على أي زر لبدء الفحص...</div>
+    <div class="grid-2">
+        <!-- ===== إنشاء حساب ===== -->
+        <div class="card">
+            <h3>🔐 إنشاء حساب جديد</h3>
+            <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="signupEmail" placeholder="example@email.com" value="test_${Date.now()}@example.com">
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="signupPassword" placeholder="••••••••" value="Test123!">
+            </div>
+            <button class="btn btn-success" id="signupBtn" onclick="createAccount()">🚀 إنشاء حساب</button>
+            <div id="signupResult" class="result-box">⏳ انتظر...</div>
+        </div>
+
+        <!-- ===== تسجيل الدخول ===== -->
+        <div class="card">
+            <h3>🔑 تسجيل الدخول</h3>
+            <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="loginEmail" placeholder="example@email.com" value="test@example.com">
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" value="Test123!">
+            </div>
+            <button class="btn btn-primary" onclick="signIn()">🔓 تسجيل الدخول</button>
+            <div id="loginResult" class="result-box">⏳ انتظر...</div>
+        </div>
+    </div>
+
+    <!-- ===== عرض المستخدمين ===== -->
+    <div class="card">
+        <h3>👥 المستخدمين</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn btn-primary" onclick="loadUsers()">📥 تحميل المستخدمين</button>
+            <button class="btn btn-secondary" onclick="clearResult()">🗑️ مسح</button>
+        </div>
+        <div id="usersResult" class="result-box">⏳ اضغط "تحميل" لعرض المستخدمين</div>
+    </div>
 </div>
 
 <script>
+// ============================================================
+// 🔥 Firebase Config
+// ============================================================
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyCV-SRgZ8Hhw6VXE0Zl0Ob0P5LPCApZPVU",
     authDomain: "venox-ffe5c.firebaseapp.com",
@@ -57,48 +171,142 @@ const FIREBASE_CONFIG = {
 };
 
 firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
 const db = firebase.firestore();
 
-const output = document.getElementById('output');
-
-function log(msg, type = 'info') {
-    const colors = { success: '#4ade80', error: '#f87171', info: '#60a5fa' };
-    const badges = { success: '✅', error: '❌', info: 'ℹ️' };
-    output.innerHTML += `<span style="color:${colors[type]}">${badges[type]} ${msg}</span>\n`;
-    output.scrollTop = output.scrollHeight;
+// ============================================================
+// 📌 TOAST
+// ============================================================
+function showToast(msg, type = 'info') {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
 }
 
-async function scanCollection(name) {
-    log(`⏳ جاري فحص مجموعة "${name}"...`, 'info');
+// ============================================================
+// 🔐 إنشاء حساب
+// ============================================================
+async function createAccount() {
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+    const result = document.getElementById('signupResult');
+    
+    if (!email || !password) {
+        result.textContent = '❌ أدخل البريد وكلمة المرور';
+        result.className = 'result-box error';
+        return;
+    }
+    
+    result.textContent = '⏳ جاري إنشاء الحساب...';
+    result.className = 'result-box';
+    document.getElementById('signupBtn').disabled = true;
+    
     try {
-        const snapshot = await db.collection(name).limit(5).get();
-        if (snapshot.empty) {
-            log(`📭 مجموعة "${name}" فارغة`, 'info');
+        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+        result.textContent = `✅ تم إنشاء الحساب!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`;
+        result.className = 'result-box success';
+        showToast('✅ تم إنشاء الحساب', 'success');
+        
+        // حفظ في Firestore
+        await db.collection('users').doc(userCred.user.uid).set({
+            uid: userCred.user.uid,
+            email: userCred.user.email,
+            role: 'user',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        document.getElementById('statusBadge').className = 'badge badge-connected';
+        document.getElementById('statusBadge').textContent = '✅ متصل';
+    } catch (error) {
+        result.textContent = `❌ فشل: ${error.message}`;
+        result.className = 'result-box error';
+        showToast(`❌ ${error.message}`, 'error');
+    }
+    document.getElementById('signupBtn').disabled = false;
+}
+
+// ============================================================
+// 🔑 تسجيل الدخول
+// ============================================================
+async function signIn() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    const result = document.getElementById('loginResult');
+    
+    if (!email || !password) {
+        result.textContent = '❌ أدخل البريد وكلمة المرور';
+        result.className = 'result-box error';
+        return;
+    }
+    
+    result.textContent = '⏳ جاري تسجيل الدخول...';
+    result.className = 'result-box';
+    
+    try {
+        const userCred = await auth.signInWithEmailAndPassword(email, password);
+        result.textContent = `✅ تم تسجيل الدخول!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`;
+        result.className = 'result-box success';
+        showToast('✅ تم تسجيل الدخول', 'success');
+        document.getElementById('statusBadge').className = 'badge badge-connected';
+        document.getElementById('statusBadge').textContent = '✅ متصل';
+        
+        // جلب التوكن
+        const token = await userCred.user.getIdToken();
+        console.log('🔑 Token:', token);
+    } catch (error) {
+        result.textContent = `❌ فشل: ${error.message}`;
+        result.className = 'result-box error';
+        showToast(`❌ ${error.message}`, 'error');
+        document.getElementById('statusBadge').className = 'badge badge-error';
+        document.getElementById('statusBadge').textContent = '❌ خطأ';
+    }
+}
+
+// ============================================================
+// 👥 تحميل المستخدمين
+// ============================================================
+async function loadUsers() {
+    const result = document.getElementById('usersResult');
+    result.textContent = '⏳ جاري التحميل...';
+    result.className = 'result-box';
+    
+    try {
+        const snapshot = await db.collection('users').get();
+        let users = [];
+        snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
+        
+        if (users.length === 0) {
+            result.textContent = '📭 لا يوجد مستخدمين';
+            result.className = 'result-box';
             return;
         }
-        log(`✅ مجموعة "${name}" مفتوحة! (${snapshot.size} وثيقة)`, 'success');
-        snapshot.forEach(doc => {
-            log(`   📄 ${doc.id}: ${JSON.stringify(doc.data(), null, 2).substring(0, 200)}...`, 'info');
+        
+        let text = `👥 ${users.length} مستخدم\n${'='.repeat(40)}\n`;
+        users.forEach((u, i) => {
+            text += `${i+1}. ${u.email || '—'} | ${u.role || 'user'} | ${u.uid || u.id}\n`;
         });
+        result.textContent = text;
+        result.className = 'result-box success';
+        
+        // تحديث الإحصائيات
+        document.getElementById('userCount').textContent = users.length;
+        document.getElementById('adminCount').textContent = users.filter(u => u.role === 'admin').length;
+        document.getElementById('verifiedCount').textContent = users.filter(u => u.isVerified === true).length;
     } catch (error) {
-        log(`❌ مجموعة "${name}" ممنوعة: ${error.message}`, 'error');
+        result.textContent = `❌ فشل: ${error.message}`;
+        result.className = 'result-box error';
+        showToast(`❌ ${error.message}`, 'error');
     }
 }
 
-async function scanAll() {
-    output.textContent = '';
-    log('🚀 بدء الفحص الشامل...', 'info');
-    const collections = ['users', 'deposits', 'withdrawals', 'transactions', 'investments', 'profiles', 'settings', 'trades', 'orders', 'payments'];
-    for (const name of collections) {
-        await scanCollection(name);
-    }
-    log('✅ انتهى الفحص!', 'success');
+function clearResult() {
+    document.getElementById('usersResult').textContent = '⏳ اضغط "تحميل" لعرض المستخدمين';
+    document.getElementById('usersResult').className = 'result-box';
 }
-
-// تحميل تلقائي
-window.onload = function() {
-    output.textContent = '🔥 جاهز! اضغط على أي زر لبدء الفحص.\n';
-};
 </script>
 
 </body>
