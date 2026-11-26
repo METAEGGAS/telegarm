@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/pages/register/login",
+      "source": "/Pages/register/login",
       "destination": "/auth.html"
     },
     {
